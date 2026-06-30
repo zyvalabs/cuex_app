@@ -1,0 +1,130 @@
+name: cuex_app
+description: "A new Flutter project."
+
+publish_to: 'none'
+version: 1.0.0+11
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  gap: ^3.0.1
+  dio: ^5.7.0
+  uuid: ^4.5.0
+  http: ^1.3.0
+  intl: ^0.20.2
+  lottie: ^3.3.1
+  shimmer: ^3.0.0
+  logger: ^2.5.0
+  flutter_svg: ^2.0.17
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.2
+  url_launcher: ^6.3.1
+  connectivity_plus: ^6.1.3
+  cached_network_image: ^3.4.1
+  flutter_native_splash: ^2.4.0
+  smooth_page_indicator: ^1.2.0+3
+  country_code_picker: ^3.1.0
+  otp_text_field: ^1.1.3
+  animate_do: ^2.1.0
+  share_plus: ^10.0.0
+  badges: ^3.1.2
+  wakelock_plus: ^1.2.10
+  firebase_database: ^11.3.5
+  youtube_player_flutter: ^9.1.3
+  iconsax: ^0.0.8
+  cupertino_icons: ^1.0.8
+  get: ^4.6.6
+  get_storage: ^2.1.1
+  readmore: ^3.0.0
+  carousel_slider: ^5.0.0
+  flutter_rating_bar: ^4.0.1
+  capped_progress_indicator: ^0.0.2
+  firebase_core: ^3.11.0
+  firebase_auth: ^5.4.2
+  firebase_messaging: ^15.2.2
+  cloud_firestore: ^5.6.3
+  firebase_storage: ^12.4.2
+  google_sign_in: ^6.2.2
+  cloud_functions: ^5.3.4
+  firebase_crashlytics: ^4.3.2
+  firebase_analytics: ^11.4.5
+  webview_flutter: ^4.10.0
+  google_places_flutter: ^2.0.9
+  path_provider: ^2.1.4
+  permission_handler: ^11.3.0
+  percent_indicator: ^4.2.1
+  google_fonts: ^6.1.0
+  battery_plus: ^5.0.3
+  freezed_annotation: ^2.4.4
+  mobile_scanner: ^5.2.3
+  qr_flutter: ^4.1.0
+  chewie: ^1.8.5
+  video_player: ^2.9.2
+  youtube_explode_dart: ^2.2.0
+  flutter_local_notifications: ^21.0.0
+  file_picker: ^8.0.0
+  device_info_plus: ^10.1.0
+  lucide_icons: ^0.257.0
+  lucide_icons_flutter: ^3.1.0
+  firebase_app_check: ^0.3.1+3
+  sms_autofill: ^2.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.13
+  flutter_lints: ^5.0.0
+  freezed: ^2.5.7
+  json_serializable: ^6.9.0
+  flutter_launcher_icons: ^0.13.1
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logos/cuex_logo_final.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logos/
+    - assets/images/reviews/
+    - assets/images/animations/
+    - assets/logos/logo.png
+    - assets/images/on_boarding_images/
+    - assets/logos/snooker.json
+    - assets/logos/Traingle.json
+    - assets/logos/logo.json
+    - assets/logos/loader.json
+    - assets/logos/favicon.png
+    - assets/logos/google-icon.png
+    - assets/videos/livestreaming.mp4
+    - assets/images/streaming/cue_cam.png
+    - assets/videos/intro.webm
+    - assets/logos/live.json
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 800

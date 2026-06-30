@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
+        android:background="#80000000">
+
+        <!-- TOP RIBBON -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="14dp">
+
+            <!-- PLAYER 1 BREAK (LEFT) -->
+            <TextView
+                android:id="@+id/tv_player1_current_break"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
+                android:text="Break: 0"
+                android:textSize="9sp"
+                android:textColor="#FFEB3B"
+                android:textStyle="bold" />
+
+            <!-- MATCH NAME (CENTER) -->
+            <TextView
+                android:id="@+id/tv_match_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="120dp"
+                android:layout_marginEnd="120dp"
+                android:text="EVENT NAME · ROUND"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:textColor="#B3FFFFFF"
+                android:maxLines="1" />
+
+            <!-- PLAYER 2 BREAK (RIGHT) -->
+            <TextView
+                android:id="@+id/tv_player2_current_break"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:text="Break: 0"
+                android:textSize="9sp"
+                android:textColor="#FFEB3B"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <!-- MAIN STRIP -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:orientation="horizontal">
+
+            <!-- PLAYER 1 NAME -->
+            <TextView
+                android:id="@+id/tv_player1_name"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:paddingStart="16dp"
+                android:gravity="center_vertical|start"
+                android:background="#FFEB3B"
+                android:text="PLAYER 1"
+                android:textAllCaps="true"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:maxLines="1" />
+
+            <!-- PLAYER 1 SCORE -->
+            <TextView
+                android:id="@+id/tv_player1_score"
+                android:layout_width="52dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:background="#FFFFFF"
+                android:text="0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <!-- FRAME SCORE -->
+            <TextView
+                android:id="@+id/tv_frame_info"
+                android:layout_width="80dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:background="#1976D2"
+                android:text="0 (5) 0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <!-- PLAYER 2 SCORE -->
+            <TextView
+                android:id="@+id/tv_player2_score"
+                android:layout_width="52dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:background="#FFFFFF"
+                android:text="0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <!-- PLAYER 2 NAME -->
+            <TextView
+                android:id="@+id/tv_player2_name"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical|end"
+                android:background="#FFEB3B"
+                android:text="PLAYER 2"
+                android:textAllCaps="true"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <!-- BOTTOM STRIP: Highest breaks -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:orientation="horizontal"
+            android:background="#CC000000">
+
+            <View
+                android:id="@+id/player1_active_indicator"
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#10B981"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_player1_high_break"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical|start"
+                android:paddingStart="8dp"
+                android:text="Highest Break: 0"
+                android:textSize="8sp"
+                android:textColor="#B3FFFFFF" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#40FFFFFF" />
+
+            <TextView
+                android:id="@+id/tv_player2_high_break"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical|end"
+                android:paddingEnd="8dp"
+                android:text="Highest Break: 0"
+                android:textSize="8sp"
+                android:textColor="#B3FFFFFF" />
+
+            <View
+                android:id="@+id/player2_active_indicator"
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#10B981"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- HIDDEN COMPATIBILITY VIEWS -->
+    <LinearLayout android:id="@+id/player1_high_break_container"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:visibility="gone">
+        <TextView android:id="@+id/tv_player1_high_break_hidden"
+            android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/player2_high_break_container"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:visibility="gone">
+        <TextView android:id="@+id/tv_player2_high_break_hidden"
+            android:layout_width="0dp" android:layout_height="0dp"/>
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/player1_current_break_container"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:visibility="gone"/>
+
+    <LinearLayout android:id="@+id/player2_current_break_container"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:visibility="gone"/>
+
+    <TextView android:id="@+id/tv_venue_name"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:visibility="gone"/>
+
+</FrameLayout>

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "488636506968",
+    "firebase_url": "https://cuex-ab44c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "cuex-ab44c",
+    "storage_bucket": "cuex-ab44c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488636506968:android:3d51631bd2fa2f16373b2d",
+        "android_client_info": {
+          "package_name": "com.cuex_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "488636506968-m2hh1oenqq005uf4bhnaui2l4ijlpek4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cuex_app",
+            "certificate_hash": "7f12868715f590223896acc729f8aeda0455f8d0"
+          }
+        },
+        {
+          "client_id": "488636506968-ldbnaudsdndqugrgt6tslfpr4llk0jcp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSo82Tko2Hc42EEuH1GG_7t0DQ9DZZE6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "488636506968-ldbnaudsdndqugrgt6tslfpr4llk0jcp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "488636506968-6vl0pqujckb4pq4mt0cnt0tb2hu7jb58.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.zyvalabs.cuex.player"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
