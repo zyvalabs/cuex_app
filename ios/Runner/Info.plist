@@ -60,5 +60,7 @@
        <string>Cue Heroes uses your location to show nearby venues.</string>
        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
        <string>Cue Heroes uses your location to show nearby venues.</string>
+       <key>ITSAppUsesNonExemptEncryption</key>
+              <false/>
     </dict>
 </plist>
