@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>488636506968-bjm770jfl4ccpvhb0vtfiv0h33jgi8bl.apps.googleusercontent.com</string>
+	<string>488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.488636506968-bjm770jfl4ccpvhb0vtfiv0h33jgi8bl</string>
+	<string>com.googleusercontent.apps.488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>488636506968-24rdbsgb1i63gm62jej0reb2o169bo8o.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.codingwitht.ecommerce.tstoreEcommerceApp</string>
+	<string>com.zyvalabs.cuex</string>
 	<key>PROJECT_ID</key>
 	<string>cuex-ab44c</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:488636506968:ios:175954890fe79773373b2d</string>
+	<string>1:488636506968:ios:21b5b65e907be344373b2d</string>
 	<key>DATABASE_URL</key>
 	<string>https://cuex-ab44c-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
