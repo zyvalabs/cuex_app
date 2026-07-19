@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>488636506968-bjm770jfl4ccpvhb0vtfiv0h33jgi8bl.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.488636506968-bjm770jfl4ccpvhb0vtfiv0h33jgi8bl</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>488636506968-24rdbsgb1i63gm62jej0reb2o169bo8o.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyA4y2lPS7Q4iQopNX4yxqqLInjUY-zoigM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>488636506968</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.codingwitht.ecommerce.tstoreEcommerceApp</string>
+	<key>PROJECT_ID</key>
+	<string>cuex-ab44c</string>
+	<key>STORAGE_BUCKET</key>
+	<string>cuex-ab44c.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:488636506968:ios:175954890fe79773373b2d</string>
+	<key>DATABASE_URL</key>
+	<string>https://cuex-ab44c-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+</dict>
+</plist>
