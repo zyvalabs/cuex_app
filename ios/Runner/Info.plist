@@ -47,7 +47,15 @@
        <true/>
        <key>UIStatusBarHidden</key>
        <false/>
-
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>com.googleusercontent.apps.488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k</string>
+    </array>
+  </dict>
+</array>
        <key>NSCameraUsageDescription</key>
        <string>Cue Heroes needs camera access to record and stream your match.</string>
        <key>NSMicrophoneUsageDescription</key>

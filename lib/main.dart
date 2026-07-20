@@ -30,11 +30,10 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ── App Check — Play Integrity for prod, debug for dev ──
+  // ── App Check — Android + iOS ──
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.playIntegrity,
-    // ✅ use debug provider for debug builds
-    // androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug, // switch to .deviceCheck for production
   );
 
   AppAnalytics.init();
