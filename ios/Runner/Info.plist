@@ -47,15 +47,23 @@
        <true/>
        <key>UIStatusBarHidden</key>
        <false/>
-<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array>
-      <string>com.googleusercontent.apps.488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k</string>
-    </array>
-  </dict>
-</array>
+
+       <key>ITSAppUsesNonExemptEncryption</key>
+       <false/>
+
+       <key>GIDClientID</key>
+       <string>488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k.apps.googleusercontent.com</string>
+
+       <key>CFBundleURLTypes</key>
+       <array>
+          <dict>
+             <key>CFBundleURLSchemes</key>
+             <array>
+                <string>com.googleusercontent.apps.488636506968-psqopl89l5vij0jdtab3l8m3sjt18g2k</string>
+             </array>
+          </dict>
+       </array>
+
        <key>NSCameraUsageDescription</key>
        <string>Cue Heroes needs camera access to record and stream your match.</string>
        <key>NSMicrophoneUsageDescription</key>
@@ -68,7 +76,5 @@
        <string>Cue Heroes uses your location to show nearby venues.</string>
        <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
        <string>Cue Heroes uses your location to show nearby venues.</string>
-       <key>ITSAppUsesNonExemptEncryption</key>
-              <false/>
     </dict>
 </plist>
