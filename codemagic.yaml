@@ -36,22 +36,32 @@ workflows:
       - name: Set up code signing
         script: xcode-project use-profiles
 
-      - name: Build IPA
+      - name: Compile check (prints Swift errors)
         script: |
           set +e
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist 2>&1 | tee /tmp/build.log
-          BUILD_STATUS=${PIPESTATUS[0]}
+          cd ios
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee /tmp/compile.log
           echo ""
           echo "########## SWIFT ERRORS ##########"
-          grep -n "error:" /tmp/build.log | head -100 || echo "none"
-          echo ""
-          echo "########## END ##########"
-          exit $BUILD_STATUS
+          grep -n "error:" /tmp/compile.log | head -80 || echo "NO ERRORS FOUND"
+          echo "########## END ERRORS ##########"
+          exit 0
+
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/build.log
+      - /tmp/compile.log
 
     publishing:
       app_store_connect:
