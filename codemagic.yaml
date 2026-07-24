@@ -10,6 +10,8 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.zyvalabs.cuex
+      integrations:
+        app_store_connect: codemagic
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
@@ -34,7 +36,7 @@ workflows:
           echo "================ SWIFT ERRORS ================"
           grep -n "error:" /tmp/build.log | head -100 || echo "no error: lines found"
           echo ""
-          echo "================ WARNINGS (Streaming files) ================"
+          echo "================ STREAMING FILE REFS ================"
           grep -n "Streaming/" /tmp/build.log | head -40 || echo "none"
           echo ""
           echo "================ END ================"
