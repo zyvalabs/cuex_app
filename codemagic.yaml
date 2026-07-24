@@ -20,7 +20,7 @@ workflows:
           grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND"
           echo "========================================"
 
-      - name: Compile check (prints Swift errors)
+      - name: Archive check (prints Swift errors)
         script: |
           set +e
           cd ios
@@ -29,14 +29,18 @@ workflows:
             -scheme Runner \
             -configuration Release \
             -sdk iphoneos \
+            -archivePath /tmp/Runner.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee /tmp/compile.log
+            archive 2>&1 | tee /tmp/compile.log
           echo ""
           echo "########## SWIFT ERRORS ##########"
           grep -n "error:" /tmp/compile.log | head -80 || echo "NO ERRORS FOUND"
-          echo "########## END ERRORS ##########"
+          echo ""
+          echo "########## SWIFT WARNINGS (Streaming) ##########"
+          grep -n "Streaming/" /tmp/compile.log | head -40 || echo "none"
+          echo "########## END ##########"
           exit 0
 
     artifacts:
