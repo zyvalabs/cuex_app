@@ -1,26 +1,13 @@
 workflows:
   ios-workflow:
-    name: iOS Release
+    name: iOS Compile Check
     instance_type: mac_mini_m2
-    max_build_duration: 60
-
-    integrations:
-      app_store_connect: codemagic
-
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: master
-          include: true
+    max_build_duration: 45
 
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.zyvalabs.cuex
 
     scripts:
       - name: Get Flutter packages
@@ -33,9 +20,6 @@ workflows:
           grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND"
           echo "========================================"
 
-      - name: Set up code signing
-        script: xcode-project use-profiles
-
       - name: Compile check (prints Swift errors)
         script: |
           set +e
@@ -47,6 +31,7 @@ workflows:
             -sdk iphoneos \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee /tmp/compile.log
           echo ""
           echo "########## SWIFT ERRORS ##########"
@@ -54,16 +39,5 @@ workflows:
           echo "########## END ERRORS ##########"
           exit 0
 
-      - name: Build IPA
-        script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
-
     artifacts:
-      - build/ios/ipa/*.ipa
       - /tmp/compile.log
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
