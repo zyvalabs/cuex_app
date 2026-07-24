@@ -7,12 +7,20 @@ workflows:
     integrations:
       app_store_connect: codemagic
 
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
+
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: "com.zyvalabs.cuex"
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.zyvalabs.cuex
 
     scripts:
       - name: Get Flutter packages
@@ -22,17 +30,11 @@ workflows:
         script: |
           find . -name "Podfile" -execdir pod install \;
           echo "========== HAISHINKIT VERSION =========="
-          grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND in Podfile.lock"
+          grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND"
           echo "========================================"
 
       - name: Set up code signing
-        script: |
-          keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-          xcode-project use-profiles
+        script: xcode-project use-profiles
 
       - name: Build IPA
         script: |
@@ -42,10 +44,7 @@ workflows:
           BUILD_STATUS=${PIPESTATUS[0]}
           echo ""
           echo "########## SWIFT ERRORS ##########"
-          grep -n "error:" /tmp/build.log | head -100 || echo "no error: lines found"
-          echo ""
-          echo "########## STREAMING FILE REFS ##########"
-          grep -n "Streaming/" /tmp/build.log | head -40 || echo "none"
+          grep -n "error:" /tmp/build.log | head -100 || echo "none"
           echo ""
           echo "########## END ##########"
           exit $BUILD_STATUS
