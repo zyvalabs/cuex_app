@@ -10,8 +10,6 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.zyvalabs.cuex
-      groups:
-        - appstore_credentials
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
@@ -19,16 +17,31 @@ workflows:
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
+          echo "================ HAISHINKIT INSTALLED ================"
+          grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT in Podfile.lock"
+          echo "====================================================="
 
       - name: Set up code signing
         script: xcode-project use-profiles
 
-      - name: Build IPA (verbose)
+      - name: Build IPA
         script: |
-          flutter build ipa --release --verbose \
-            --export-options-plist=/Users/builder/export_options.plist
+          set +e
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist 2>&1 | tee /tmp/build.log
+          BUILD_STATUS=${PIPESTATUS[0]}
+          echo ""
+          echo "================ SWIFT ERRORS ================"
+          grep -n "error:" /tmp/build.log | head -100 || echo "no error: lines found"
+          echo ""
+          echo "================ WARNINGS (Streaming files) ================"
+          grep -n "Streaming/" /tmp/build.log | head -40 || echo "none"
+          echo ""
+          echo "================ END ================"
+          exit $BUILD_STATUS
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/build.log
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
