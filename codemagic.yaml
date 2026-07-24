@@ -3,6 +3,10 @@ workflows:
     name: iOS Release
     instance_type: mac_mini_m2
     max_build_duration: 60
+
+    integrations:
+      app_store_connect: codemagic
+
     environment:
       flutter: stable
       xcode: latest
@@ -10,8 +14,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.zyvalabs.cuex
-      integrations:
-        app_store_connect: codemagic
+
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
@@ -19,9 +22,9 @@ workflows:
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
-          echo "================ HAISHINKIT INSTALLED ================"
-          grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT in Podfile.lock"
-          echo "====================================================="
+          echo "========== HAISHINKIT VERSION =========="
+          grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND in Podfile.lock"
+          echo "========================================"
 
       - name: Set up code signing
         script: xcode-project use-profiles
@@ -33,18 +36,19 @@ workflows:
             --export-options-plist=/Users/builder/export_options.plist 2>&1 | tee /tmp/build.log
           BUILD_STATUS=${PIPESTATUS[0]}
           echo ""
-          echo "================ SWIFT ERRORS ================"
+          echo "########## SWIFT ERRORS ##########"
           grep -n "error:" /tmp/build.log | head -100 || echo "no error: lines found"
           echo ""
-          echo "================ STREAMING FILE REFS ================"
+          echo "########## STREAMING FILE REFS ##########"
           grep -n "Streaming/" /tmp/build.log | head -40 || echo "none"
           echo ""
-          echo "================ END ================"
+          echo "########## END ##########"
           exit $BUILD_STATUS
+
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/build.log
-      - /tmp/xcodebuild_logs/*.log
+
     publishing:
       app_store_connect:
         auth: integration
