@@ -26,6 +26,7 @@ import '../../../shop/screens/events/my_events.dart';
 import '../../../shop/screens/live streaming pedro/presentation/screens/youtube_streaming.dart';
 import '../../../shop/screens/matches/create_match_screen.dart';
 import '../../../shop/screens/matches/matches_screen.dart';
+import '../../../shop/screens/matches/widgets/create_match_screen.dart';
 import '../../../shop/screens/players/player_qr_screen.dart';
 import '../../../shop/screens/promotion/promotion_list.dart';
 import '../../../shop/screens/streaming/streaming_credits_screen.dart';
@@ -95,7 +96,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Iconsax.video_play,
                       title: 'Go Live',
                       subTitle: 'Create and stream a live match',
-                      onTap: () => Get.to(() => CreateMatchScreen(eventId: '',isPractice: true,)),
+                      onTap: () => Get.to(() => CreateMatchScreen()),
                     ),
                     ),
                     TSettingsMenuTile(

@@ -36,7 +36,7 @@ import '../features/shop/screens/coupon/coupon_screen.dart';
 import '../features/shop/screens/events/add_event_screen.dart';
 import '../features/shop/screens/events/events_screen.dart';
 import '../features/shop/screens/favourites/favourite.dart';
-import '../features/shop/screens/home/home.dart';
+import '../features/shop/screens/home/home_screen.dart';
 import '../features/shop/screens/live streaming pedro/presentation/screens/LiveStreamingScreen.dart';
 import '../features/shop/screens/matches/completed_matches.dart';
 
@@ -53,7 +53,7 @@ class AppRoutes {
   static final pages = [
     GetPage(name: TRoutes.phoneSignIn, page: () => const PhoneNumberScreen(), binding: SignInBinding()),
     GetPage(name: TRoutes.home, page: () => const HomeScreen()),
-    GetPage(name: TRoutes.homeMenu, page: () => const HomeMenu()),
+    // GetPage(name: TRoutes.homeMenu, page: () => const HomeMenu()),
     GetPage(name: TRoutes.store, page: () => const StoreScreen()),
     GetPage(name: TRoutes.favourites, page: () => const FavouriteScreen()),
     GetPage(name: TRoutes.settings,      binding: UserBinding(), page: () => const SettingsScreen()),

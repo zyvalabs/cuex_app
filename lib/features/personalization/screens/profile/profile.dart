@@ -1,3 +1,4 @@
+import 'package:cuex_app/features/shop/screens/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -238,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                   child: TextButton(
                     onPressed: () {
                       GetStorage().write('profile_completion_skipped', true);
-                      Get.offAll(() => const HomeMenu());
+                      Get.offAll(() => const HomeScreen());
                     },
                     child: const Text('Skip for now'),
                   ),

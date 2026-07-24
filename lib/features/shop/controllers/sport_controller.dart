@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -352,13 +353,17 @@ class SportController extends GetxController {
 
   void _cacheActiveSports(List<SportModel> sports) {
     try {
-      _storage.write(
-          'activeSports', sports.map((s) => s.toJson()).toList());
+      final data = sports.map((s) {
+        final json = Map<String, dynamic>.from(s.toJson());
+        json.removeWhere((k, v) => v is Timestamp || v is DateTime);
+        json['id'] = s.id;
+        return json;
+      }).toList();
+      _storage.write('activeSports', data);
     } catch (e) {
       print('⚠️ SportController _cacheActiveSports error: $e');
     }
   }
-
   void _loadCached() {
     try {
       final data = _storage.read('activeSports');

@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../features/shop/models/sport_model.dart';class SportsGrid extends StatelessWidget {
+import '../../../features/shop/models/sport_model.dart';
+
+class SportsGrid extends StatelessWidget {
   const SportsGrid({
     super.key,
     required this.sports,
@@ -16,6 +17,10 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
   final Function(SportModel)? onTap;
   final bool multiSelect;
 
+  static const Color _accent = Color(0xFF0F6E56);
+  static const Color _accentBg = Color(0xFFE1F5EE);
+  static const Color _border = Color(0xFFE5E5E5);
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -26,7 +31,8 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
         itemBuilder: (_, index) {
           final sport = sports[index];
           final isSelected = selectedSportIds.contains(sport.id);
-          final isValidUrl = sport.iconUrl.isNotEmpty && sport.iconUrl.startsWith('http');
+          final isValidUrl =
+              sport.iconUrl.isNotEmpty && sport.iconUrl.startsWith('http');
           final cardWidth = (MediaQuery.of(context).size.width - 48) / 3;
 
           return GestureDetector(
@@ -36,14 +42,10 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
               margin: const EdgeInsets.only(right: 10),
               width: cardWidth,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFFC8A84B).withOpacity(0.12)
-                    : const Color(0xFF1A1A1A),
+                color: isSelected ? _accentBg : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFFC8A84B)
-                      : const Color(0xFF2C2C2C),
+                  color: isSelected ? _accent : _border,
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
@@ -59,21 +61,21 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
                         width: 80,
                         height: 80,
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => const Icon(
+                        placeholder: (_, __) => Icon(
                           Icons.sports,
                           size: 40,
-                          color: Colors.white12,
+                          color: Colors.grey.shade300,
                         ),
-                        errorWidget: (_, __, ___) => const Icon(
+                        errorWidget: (_, __, ___) => Icon(
                           Icons.sports,
                           size: 40,
-                          color: Colors.white38,
+                          color: Colors.grey.shade400,
                         ),
                       )
-                          : const Icon(
+                          : Icon(
                         Icons.sports,
                         size: 40,
-                        color: Colors.white38,
+                        color: Colors.grey.shade400,
                       ),
                     ),
                   ),
@@ -85,8 +87,8 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFFC8A84B).withOpacity(0.18)
-                            : const Color(0xFF222222),
+                            ? _accent.withOpacity(0.12)
+                            : const Color(0xFFF5F5F5),
                         borderRadius: const BorderRadius.vertical(
                           bottom: Radius.circular(16),
                         ),
@@ -97,9 +99,7 @@ import '../../../features/shop/models/sport_model.dart';class SportsGrid extends
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: isSelected
-                              ? const Color(0xFFC8A84B)
-                              : Colors.white70,
+                          color: isSelected ? _accent : Colors.black54,
                           letterSpacing: 0.3,
                         ),
                         textAlign: TextAlign.center,

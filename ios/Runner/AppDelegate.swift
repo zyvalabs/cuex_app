@@ -3,11 +3,36 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
-  override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-  ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
+
+    private var streamingHandler: StreamingHandler?
+
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+
+        GeneratedPluginRegistrant.register(with: self)
+
+        let controller = window?.rootViewController as! FlutterViewController
+        let messenger = controller.binaryMessenger
+
+        // Register camera preview platform view
+        let factory = CameraPreviewFactory(messenger: messenger)
+        registrar(forPlugin: "CameraPreview")?
+            .register(factory, withId: "com.cuex.app/camera_preview")
+
+        // Register streaming channels
+        streamingHandler = StreamingHandler()
+        streamingHandler?.setup(messenger: messenger)
+
+        // Keep screen awake while streaming
+        application.isIdleTimerDisabled = true
+
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    override func applicationWillTerminate(_ application: UIApplication) {
+        streamingHandler?.release()
+        super.applicationWillTerminate(application)
+    }
 }

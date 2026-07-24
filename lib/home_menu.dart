@@ -14,7 +14,7 @@ import 'package:lottie/lottie.dart';
 import 'features/personalization/controllers/user_controller.dart';
 import 'features/personalization/screens/setting/settings.dart';
 import 'features/shop/screens/home/admin_home_screen/admin_home.dart';
-import 'features/shop/screens/home/home.dart';
+import 'features/shop/screens/home/home_screen.dart';
 
 // ── Green accent ────────────────────────────
 const _kGreen = Color(0xFF2ECC71);
