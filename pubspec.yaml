@@ -62,7 +62,7 @@ dependencies:
   google_fonts: ^6.1.0
   battery_plus: ^5.0.3
   freezed_annotation: ^2.4.4
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^6.0.2
   qr_flutter: ^4.1.0
   chewie: ^1.8.5
   video_player: ^2.9.2
