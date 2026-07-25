@@ -1,15 +1,31 @@
 workflows:
   ios-workflow:
-    name: iOS Compile Check
+    name: iOS Release
     instance_type: mac_mini_m2
-    max_build_duration: 45
+    max_build_duration: 60
+
+    integrations:
+      app_store_connect: codemagic
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: master
+          include: true
 
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.zyvalabs.cuex
 
     scripts:
+      - name: Disable Swift Package Manager
+        script: flutter config --no-enable-swift-package-manager
+
       - name: Get Flutter packages
         script: flutter pub get
 
@@ -20,28 +36,18 @@ workflows:
           grep -n "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT FOUND"
           echo "========================================"
 
-      - name: Archive check (prints Swift errors)
+      - name: Set up code signing
+        script: xcode-project use-profiles
+
+      - name: Build IPA
         script: |
-          set +e
-          cd ios
-          xcodebuild \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath /tmp/Runner.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            archive 2>&1 | tee /tmp/compile.log
-          echo ""
-          echo "########## SWIFT ERRORS ##########"
-          grep -n "error:" /tmp/compile.log | head -80 || echo "NO ERRORS FOUND"
-          echo ""
-          echo "########## SWIFT WARNINGS (Streaming) ##########"
-          grep -n "Streaming/" /tmp/compile.log | head -40 || echo "none"
-          echo "########## END ##########"
-          exit 0
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
-      - /tmp/compile.log
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
