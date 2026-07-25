@@ -31,6 +31,9 @@ workflows:
       - name: Install pods
         script: |
           find . -name "Podfile" -execdir pod install \;
+          echo "########## HAISHINKIT VERSION ##########"
+          grep -A1 "HaishinKit" ios/Podfile.lock || echo "HaishinKit NOT in lock"
+          echo "########################################"
 
       - name: Set up code signing
         script: |
@@ -47,15 +50,11 @@ workflows:
           flutter build ios --release --no-codesign 2>&1 | tee /tmp/fb.log
           STATUS=${PIPESTATUS[0]}
           echo ""
-          echo "########## SWIFT ERRORS (flutter log) ##########"
-          grep -n "error:" /tmp/fb.log | head -80 || echo "none in flutter log"
+          echo "########## FAILURES ##########"
+          grep -nE "error:|error generated|fatal error|cannot find|no such module|Undefined symbol|is unavailable|has no member|extra argument|missing argument|incorrect argument" /tmp/fb.log | head -120 || echo "nothing matched"
           echo ""
-          echo "########## RAW XCODEBUILD ERRORS ##########"
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner \
-            -configuration Release -sdk iphoneos \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            build 2>&1 | grep -n "error:" | head -80 || echo "none in raw log"
+          echo "########## HAISHINKIT / STREAMING LINES ##########"
+          grep -niE "haishinkit|MTHKView|RTMPStream|RTMPConnection|VideoCodec|AudioCodec|Streaming/" /tmp/fb.log | head -80 || echo "none"
           echo "########## END ##########"
           exit $STATUS
 
