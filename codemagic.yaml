@@ -43,7 +43,21 @@ workflows:
 
       - name: Flutter build (no codesign)
         script: |
-          flutter build ios --release --no-codesign
+          set +e
+          flutter build ios --release --no-codesign 2>&1 | tee /tmp/fb.log
+          STATUS=${PIPESTATUS[0]}
+          echo ""
+          echo "########## SWIFT ERRORS (flutter log) ##########"
+          grep -n "error:" /tmp/fb.log | head -80 || echo "none in flutter log"
+          echo ""
+          echo "########## RAW XCODEBUILD ERRORS ##########"
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner \
+            -configuration Release -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | grep -n "error:" | head -80 || echo "none in raw log"
+          echo "########## END ##########"
+          exit $STATUS
 
       - name: Package IPA (signed)
         script: |
@@ -53,7 +67,7 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
+      - /tmp/fb.log
 
     publishing:
       app_store_connect:
