@@ -2,7 +2,7 @@ import 'package:cuex_app/features/shop/screens/matches/widgets/player_selected_c
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+
 
 import '../../../../../common/widgets/sports/sports_grid.dart';
 import '../../../../../utils/constants/enums.dart';
@@ -336,14 +336,11 @@ class _QRScannerScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Scan Player QR')),
       body: Stack(
         children: [
-          MobileScanner(
-            onDetect: (capture) {
-              final barcode = capture.barcodes.firstOrNull;
-              if (barcode?.rawValue != null) {
-                onScanned(barcode!.rawValue!);
-                Get.back();
-              }
-            },
+          const Center(
+            child: Text(
+              'QR Scanner temporarily unavailable',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           // Overlay guide
           Center(

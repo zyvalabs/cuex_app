@@ -209,7 +209,7 @@ class AppScreenController extends GetxController {
         return [
           const HomeScreen(),
           const MatchesScreen(),
-          const ScanScreen(),
+          const MatchesScreen(),
           const EventsScreen(showBackArrow: false),
           const SettingsScreen(),
         ];
