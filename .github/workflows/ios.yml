@@ -8,7 +8,7 @@ on:
 jobs:
   build-ios:
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -17,17 +17,11 @@ jobs:
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      - name: Flutter version
-        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
@@ -37,28 +31,65 @@ jobs:
 
       - name: Install CocoaPods
         run: |
-          cd ios
-          pod install --repo-update
-          cd ..
+          cd ios && pod install --repo-update && cd ..
 
-      - name: Build iOS (no codesign) — surfaces real errors
+      - name: Install Apple certificate & profile (via API key)
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+        run: |
+          pip3 install codemagic-cli-tools
+          mkdir -p ~/private_keys
+          printf '%s' "$ASC_KEY" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --issuer-id "$ASC_ISSUER_ID" \
+            --key-id "$ASC_KEY_ID" \
+            --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Build signed IPA
         run: |
           set -o pipefail
-          flutter build ios --release --no-codesign 2>&1 | tee /tmp/build.log
-        continue-on-error: true
+          flutter build ipa --release \
+            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log
 
-      - name: Show any errors
+      - name: Show IPA errors (if any)
         if: always()
         run: |
-          echo "########## ERRORS ##########"
-          grep -nE "error:|error generated|CompileAssetCatalog|SwiftCompile|Cannot find|no such module|has no member|Consecutive declarations" /tmp/build.log | grep -iv "CoreSimulator" | head -100 || echo "no matches"
-          echo "########## LAST 40 LINES ##########"
-          tail -40 /tmp/build.log
-          echo "########## END ##########"
+          echo "########## IPA ERRORS ##########"
+          grep -nE "error:|Encountered error|Cannot find|no such module" /tmp/ipa.log | head -60 || echo "none"
+          echo "########## LAST 30 ##########"
+          tail -30 /tmp/ipa.log
 
-      - name: Upload build log
+      - name: Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          IPA=$(find build/ios/ipa -name "*.ipa" | head -1)
+          echo "IPA path: $IPA"
+          if [ -n "$IPA" ]; then
+            app-store-connect publish \
+              --path "$IPA" \
+              --issuer-id "$ASC_ISSUER_ID" \
+              --key-id "$ASC_KEY_ID" \
+              --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          else
+            echo "No IPA produced"
+            exit 1
+          fi
+
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: /tmp/build.log
+          name: ios-build
+          path: |
+            /tmp/ipa.log
+            build/ios/ipa/*.ipa
