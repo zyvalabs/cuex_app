@@ -33,7 +33,7 @@ jobs:
         run: |
           cd ios && pod install --repo-update && cd ..
 
-      - name: Install Apple certificate & profile (via API key)
+      - name: Install signing tools & fetch certs
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -41,15 +41,23 @@ jobs:
           BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
         run: |
           pip3 install --break-system-packages codemagic-cli-tools
+
           mkdir -p ~/private_keys
           printf '%s' "$ASC_KEY" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+          # Generate a fresh RSA private key for the signing certificate
+          openssl genrsa -out ~/private_keys/cert_key.pem 2048
+
           keychain initialize
+
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --issuer-id "$ASC_ISSUER_ID" \
             --key-id "$ASC_KEY_ID" \
             --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            --certificate-key @file:~/private_keys/cert_key.pem \
             --create
+
           keychain add-certificates
           xcode-project use-profiles
 
@@ -63,9 +71,13 @@ jobs:
         if: always()
         run: |
           echo "########## IPA ERRORS ##########"
-          grep -nE "error:|Encountered error|Cannot find|no such module" /tmp/ipa.log | head -60 || echo "none"
-          echo "########## LAST 30 ##########"
-          tail -30 /tmp/ipa.log
+          if [ -f /tmp/ipa.log ]; then
+            grep -nE "error:|Encountered error|Cannot find|no such module" /tmp/ipa.log | head -60 || echo "none"
+            echo "########## LAST 30 ##########"
+            tail -30 /tmp/ipa.log
+          else
+            echo "no ipa.log (build step failed earlier)"
+          fi
 
       - name: Upload to TestFlight
         env:
