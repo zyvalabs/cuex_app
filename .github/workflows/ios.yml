@@ -40,7 +40,7 @@ jobs:
           ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
         run: |
-          pip3 install codemagic-cli-tools
+          pip3 install --break-system-packages codemagic-cli-tools
           mkdir -p ~/private_keys
           printf '%s' "$ASC_KEY" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
           keychain initialize
