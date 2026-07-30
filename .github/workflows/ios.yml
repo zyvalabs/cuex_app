@@ -17,11 +17,6 @@ jobs:
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Show Xcode & SDKs
-        run: |
-          xcodebuild -version
-          xcodebuild -showsdks | grep -i ios || true
-
       - name: Install iOS platform SDK
         run: |
           for i in 1 2 3; do
@@ -42,6 +37,38 @@ jobs:
 
       - name: Disable Swift Package Manager
         run: flutter config --no-enable-swift-package-manager
+
+      - name: Add Streaming files to Xcode target
+        run: |
+          gem install xcodeproj
+          ruby - <<'RUBY'
+          require 'xcodeproj'
+          project_path = 'ios/Runner.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          target = project.targets.find { |t| t.name == 'Runner' }
+
+          runner_group = project.main_group['Runner']
+          streaming_group = runner_group['Streaming'] || runner_group.new_group('Streaming', 'Runner/Streaming')
+
+          %w[
+            HaishinKitStreamer.swift
+            CameraPreviewFactory.swift
+            ScoreboardRenderer.swift
+            StreamingHandler.swift
+          ].each do |file|
+            already = target.source_build_phase.files_references.any? { |r| r.respond_to?(:path) && r.path && r.path.end_with?(file) }
+            if already
+              puts "Already present: #{file}"
+              next
+            end
+            ref = streaming_group.new_reference("Runner/Streaming/#{file}")
+            target.add_file_references([ref])
+            puts "Added: #{file}"
+          end
+
+          project.save
+          puts "project.pbxproj saved"
+          RUBY
 
       - name: Install CocoaPods
         run: |
