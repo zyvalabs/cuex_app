@@ -14,35 +14,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show available Xcodes
-        run: ls /Applications | grep -i xcode
-
-      - name: Select Xcode 26
+      - name: Select Xcode 26.4.1
         run: |
-          if [ -d "/Applications/Xcode_26.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_26.app
-          else
-            sudo xcode-select -s "$(ls -d /Applications/Xcode_26* | head -1)"
-          fi
+          sudo xcode-select -s /Applications/Xcode_26.4.1.app
           xcodebuild -version
+          echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
 
-      - name: Show installed SDKs
-        run: xcodebuild -showsdks || true
-
-      - name: Install iOS 26 platform
-        run: |
-          echo "Checking for iphoneos SDK..."
-          if xcodebuild -showsdks | grep -qi "iphoneos"; then
-            echo "iOS SDK already present"
-          else
-            echo "Downloading iOS platform..."
-            for i in 1 2 3 4 5; do
-              xcodebuild -downloadPlatform iOS && break
-              echo "retry $i..."
-              sleep 20
-            done
-          fi
-        continue-on-error: true
+      - name: Confirm iOS SDK present
+        run: xcodebuild -showsdks | grep -i iphoneos
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
