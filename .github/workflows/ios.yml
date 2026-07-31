@@ -48,7 +48,12 @@ jobs:
           target = project.targets.find { |t| t.name == 'Runner' }
 
           runner_group = project.main_group['Runner']
-          streaming_group = runner_group['Streaming'] || runner_group.new_group('Streaming', 'Runner/Streaming')
+
+          # Remove any existing (possibly broken) Streaming group to start clean
+          existing = runner_group['Streaming']
+          existing.remove_from_project if existing
+
+          streaming_group = runner_group.new_group('Streaming', 'Runner/Streaming')
 
           %w[
             HaishinKitStreamer.swift
@@ -56,12 +61,13 @@ jobs:
             ScoreboardRenderer.swift
             StreamingHandler.swift
           ].each do |file|
-            already = target.source_build_phase.files_references.any? { |r| r.respond_to?(:path) && r.path && r.path.end_with?(file) }
-            if already
-              puts "Already present: #{file}"
-              next
+            # remove any stale references to this filename anywhere in the target
+            target.source_build_phase.files.dup.each do |bf|
+              if bf.file_ref && bf.file_ref.path && bf.file_ref.path.end_with?(file)
+                target.source_build_phase.remove_build_file(bf)
+              end
             end
-            ref = streaming_group.new_reference("Runner/Streaming/#{file}")
+            ref = streaming_group.new_reference(file)
             target.add_file_references([ref])
             puts "Added: #{file}"
           end
