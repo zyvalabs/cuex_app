@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  geocoding: ^4.0.0
+  geocoding: ^5.0.0
   geolocator: ^14.0.2
   gap: ^3.0.1
   dio: ^5.7.0
@@ -25,18 +25,18 @@ dependencies:
   image_picker: ^1.1.2
 
   url_launcher: ^6.3.1
-  connectivity_plus: ^6.1.3
+  connectivity_plus: ^7.3.1
   cached_network_image: ^3.4.1
   flutter_native_splash: ^2.4.0
-  smooth_page_indicator: ^1.2.0+3
+  smooth_page_indicator: ^2.0.1
   country_code_picker: ^3.1.0
   otp_text_field: ^1.1.3
-  animate_do: ^2.1.0
-  share_plus: ^10.0.0
+  animate_do: ^5.1.0
+  share_plus: ^13.3.0
   badges: ^3.1.2
   wakelock_plus: ^1.2.10
-  firebase_database: ^11.3.5
-  youtube_player_flutter: ^9.1.3
+  firebase_database: ^12.4.6
+  youtube_player_flutter: ^10.0.1
   iconsax: ^0.0.8
   cupertino_icons: ^1.0.8
   get: ^4.6.6
@@ -45,44 +45,44 @@ dependencies:
   carousel_slider: ^5.0.0
   flutter_rating_bar: ^4.0.1
   capped_progress_indicator: ^0.0.2
-  firebase_core: ^3.11.0
-  firebase_auth: ^5.4.2
-  firebase_messaging: ^15.2.2
-  cloud_firestore: ^5.6.3
-  firebase_storage: ^12.4.2
-  google_sign_in: ^6.2.2
-  cloud_functions: ^5.3.4
-  firebase_crashlytics: ^4.3.2
-  firebase_analytics: ^11.4.5
+  firebase_core: ^4.12.1
+  firebase_auth: ^6.5.6
+  firebase_messaging: ^16.4.3
+  cloud_firestore: ^6.7.1
+  firebase_storage: ^13.4.5
+  google_sign_in: ^7.2.0
+  cloud_functions: ^6.3.5
+  firebase_crashlytics: ^5.2.6
+  firebase_analytics: ^12.4.5
   webview_flutter: ^4.10.0
   google_places_flutter: ^2.0.9
   path_provider: ^2.1.4
-  permission_handler: ^11.3.0
+  permission_handler: ^12.0.3
   percent_indicator: ^4.2.1
-  google_fonts: ^6.1.0
-  battery_plus: ^5.0.3
-  freezed_annotation: ^2.4.4
+  google_fonts: ^8.2.0
+  battery_plus: ^7.1.1
+  freezed_annotation: ^3.1.0
 
   qr_flutter: ^4.1.0
   chewie: ^1.8.5
   video_player: ^2.9.2
-  youtube_explode_dart: ^2.2.0
-  flutter_local_notifications: ^21.0.0
-  file_picker: ^8.0.0
-  device_info_plus: ^10.1.0
+  youtube_explode_dart: ^3.1.0
+  flutter_local_notifications: ^22.2.0
+  file_picker: ^12.0.0-beta.7
+  device_info_plus: ^13.2.0
   lucide_icons: ^0.257.0
   lucide_icons_flutter: ^3.1.0
-  firebase_app_check: ^0.3.1+3
+  firebase_app_check: ^0.4.5+2
   sms_autofill: ^2.4.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: ^2.4.13
-  flutter_lints: ^5.0.0
-  freezed: ^2.5.7
+  flutter_lints: ^6.0.0
+  freezed: ^3.2.5
   json_serializable: ^6.9.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 
 flutter_launcher_icons:

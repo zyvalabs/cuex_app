@@ -7,30 +7,46 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 120
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16
-        run: sudo xcode-select -s /Applications/Xcode_16.app
+      - name: Show available Xcodes
+        run: ls /Applications | grep -i xcode
 
-      - name: Install iOS platform SDK
+      - name: Select Xcode 26
         run: |
-          for i in 1 2 3; do
-            xcodebuild -downloadPlatform iOS && break
-            echo "retry $i..."
-            sleep 15
-          done
-        continue-on-error: true
+          if [ -d "/Applications/Xcode_26.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.app
+          else
+            sudo xcode-select -s "$(ls -d /Applications/Xcode_26* | head -1)"
+          fi
+          xcodebuild -version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+
+      - name: Cache Pub packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
 
       - name: Install dependencies
         run: flutter pub get
@@ -46,21 +62,15 @@ jobs:
           project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
           target = project.targets.find { |t| t.name == 'Runner' }
           runner_group = project.main_group['Runner']
-
-          # clean any prior broken Streaming group
           existing = runner_group['Streaming']
           existing.remove_from_project if existing
-
-          # group path is relative to parent (Runner) -> just 'Streaming'
           streaming_group = runner_group.new_group('Streaming', 'Streaming')
-
           %w[
             HaishinKitStreamer.swift
             CameraPreviewFactory.swift
             ScoreboardRenderer.swift
             StreamingHandler.swift
           ].each do |file|
-            # remove stale build-file refs to this filename
             target.source_build_phase.files.dup.each do |bf|
               if bf.file_ref && bf.file_ref.path && bf.file_ref.path.end_with?(file)
                 target.source_build_phase.remove_build_file(bf)
@@ -68,9 +78,8 @@ jobs:
             end
             ref = streaming_group.new_reference(file)
             target.add_file_references([ref])
-            puts "Added: #{file} (path=#{ref.real_path})"
+            puts "Added: #{file} (#{ref.real_path})"
           end
-
           project.save
           puts "saved"
           RUBY
@@ -112,7 +121,7 @@ jobs:
         run: |
           echo "########## IPA ERRORS ##########"
           if [ -f /tmp/ipa.log ]; then
-            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files" /tmp/ipa.log | head -60 || echo "none"
+            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files" /tmp/ipa.log | head -80 || echo "none"
             echo "########## LAST 30 ##########"
             tail -30 /tmp/ipa.log
           else
