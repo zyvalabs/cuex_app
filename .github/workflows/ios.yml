@@ -43,17 +43,16 @@ jobs:
           gem install xcodeproj
           ruby - <<'RUBY'
           require 'xcodeproj'
-          project_path = 'ios/Runner.xcodeproj'
-          project = Xcodeproj::Project.open(project_path)
+          project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
           target = project.targets.find { |t| t.name == 'Runner' }
-
           runner_group = project.main_group['Runner']
 
-          # Remove any existing (possibly broken) Streaming group to start clean
+          # clean any prior broken Streaming group
           existing = runner_group['Streaming']
           existing.remove_from_project if existing
 
-          streaming_group = runner_group.new_group('Streaming', 'Runner/Streaming')
+          # group path is relative to parent (Runner) -> just 'Streaming'
+          streaming_group = runner_group.new_group('Streaming', 'Streaming')
 
           %w[
             HaishinKitStreamer.swift
@@ -61,7 +60,7 @@ jobs:
             ScoreboardRenderer.swift
             StreamingHandler.swift
           ].each do |file|
-            # remove any stale references to this filename anywhere in the target
+            # remove stale build-file refs to this filename
             target.source_build_phase.files.dup.each do |bf|
               if bf.file_ref && bf.file_ref.path && bf.file_ref.path.end_with?(file)
                 target.source_build_phase.remove_build_file(bf)
@@ -69,11 +68,11 @@ jobs:
             end
             ref = streaming_group.new_reference(file)
             target.add_file_references([ref])
-            puts "Added: #{file}"
+            puts "Added: #{file} (path=#{ref.real_path})"
           end
 
           project.save
-          puts "project.pbxproj saved"
+          puts "saved"
           RUBY
 
       - name: Install CocoaPods
@@ -88,14 +87,10 @@ jobs:
           BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
         run: |
           pip3 install --break-system-packages codemagic-cli-tools
-
           mkdir -p ~/private_keys
           printf '%s' "$ASC_KEY" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
-
           openssl genrsa -out ~/private_keys/cert_key.pem 2048
-
           keychain initialize
-
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --issuer-id "$ASC_ISSUER_ID" \
@@ -103,7 +98,6 @@ jobs:
             --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
             --certificate-key @file:~/private_keys/cert_key.pem \
             --create
-
           keychain add-certificates
           xcode-project use-profiles
 
@@ -118,11 +112,11 @@ jobs:
         run: |
           echo "########## IPA ERRORS ##########"
           if [ -f /tmp/ipa.log ]; then
-            grep -nE "error:|Encountered error|Cannot find|no such module" /tmp/ipa.log | head -60 || echo "none"
+            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files" /tmp/ipa.log | head -60 || echo "none"
             echo "########## LAST 30 ##########"
             tail -30 /tmp/ipa.log
           else
-            echo "no ipa.log (build step failed earlier)"
+            echo "no ipa.log"
           fi
 
       - name: Upload to TestFlight
