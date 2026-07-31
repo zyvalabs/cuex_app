@@ -26,6 +26,24 @@ jobs:
           fi
           xcodebuild -version
 
+      - name: Show installed SDKs
+        run: xcodebuild -showsdks || true
+
+      - name: Install iOS 26 platform
+        run: |
+          echo "Checking for iphoneos SDK..."
+          if xcodebuild -showsdks | grep -qi "iphoneos"; then
+            echo "iOS SDK already present"
+          else
+            echo "Downloading iOS platform..."
+            for i in 1 2 3 4 5; do
+              xcodebuild -downloadPlatform iOS && break
+              echo "retry $i..."
+              sleep 20
+            done
+          fi
+        continue-on-error: true
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -78,10 +96,9 @@ jobs:
             end
             ref = streaming_group.new_reference(file)
             target.add_file_references([ref])
-            puts "Added: #{file} (#{ref.real_path})"
+            puts "Added: #{file}"
           end
           project.save
-          puts "saved"
           RUBY
 
       - name: Install CocoaPods
@@ -121,7 +138,7 @@ jobs:
         run: |
           echo "########## IPA ERRORS ##########"
           if [ -f /tmp/ipa.log ]; then
-            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files" /tmp/ipa.log | head -80 || echo "none"
+            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files|not installed" /tmp/ipa.log | head -80 || echo "none"
             echo "########## LAST 30 ##########"
             tail -30 /tmp/ipa.log
           else
