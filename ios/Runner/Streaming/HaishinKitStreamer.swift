@@ -63,7 +63,7 @@ final class HaishinKitStreamer: NSObject {
         stream.sessionPreset = .hd1920x1080
 
         var v = VideoCodecSettings()
-        v.videoSize = VideoSize(width: Int32(width), height: Int32(height))
+        v.videoSize = CGSize(width: width, height: height)
         v.bitRate = bitrate
         v.isHardwareEncoderEnabled = true
         stream.videoSettings = v
@@ -83,15 +83,15 @@ final class HaishinKitStreamer: NSObject {
         let camera = AVCaptureDevice.default(
             .builtInWideAngleCamera, for: .video, position: currentPosition
         )
-        stream.attachCamera(camera) { error in
-            print("attachCamera error: \(error)")
+        stream.attachCamera(camera) { _, error in
+            if let error { print("attachCamera error: \(error)") }
         }
     }
 
     private func attachAudioDevice() {
         let mic = AVCaptureDevice.default(for: .audio)
-        stream.attachAudio(mic) { error in
-            print("attachAudio error: \(error)")
+        stream.attachAudio(mic) { _, error in
+            if let error { print("attachAudio error: \(error)") }
         }
     }
 
@@ -196,7 +196,7 @@ final class HaishinKitStreamer: NSObject {
         } catch { print("toggleAutoFocus: \(error)") }
     }
 
-    // MARK: - Audio (detach/attach = version-safe mute)
+    // MARK: - Audio
 
     func muteAudio() {
         stream.attachAudio(nil)
