@@ -61,7 +61,7 @@ jobs:
           project.save
           RUBY
 
-      - name: Flutter config-only (generates iOS build config, no archive)
+      - name: Flutter config-only
         run: flutter build ios --release --config-only --no-codesign
 
       - name: Install CocoaPods (fresh)
@@ -71,7 +71,29 @@ jobs:
           pod install --repo-update
           cd ..
 
-      - name: RAW xcodebuild — shows all Swift errors
+      - name: Install signing tools & fetch certs
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          BUNDLE_ID: ${{ secrets.BUNDLE_ID }}
+        run: |
+          pip3 install --break-system-packages codemagic-cli-tools
+          mkdir -p ~/private_keys
+          printf '%s' "$ASC_KEY" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          openssl genrsa -out ~/private_keys/cert_key.pem 2048
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --issuer-id "$ASC_ISSUER_ID" \
+            --key-id "$ASC_KEY_ID" \
+            --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            --certificate-key @file:~/private_keys/cert_key.pem \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: Archive with raw xcodebuild (shows errors)
         run: |
           set +e
           cd ios
@@ -81,18 +103,66 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            build 2>&1 | tee /tmp/raw.log
+            -archivePath $HOME/Runner.xcarchive \
+            SWIFT_COMPILATION_MODE=singlefile \
+            archive 2>&1 | tee /tmp/archive.log
+          ARCHIVE_EXIT=${PIPESTATUS[0]}
           echo ""
-          echo "===================== SWIFT ERRORS ====================="
-          grep -nE "error:" /tmp/raw.log | head -100 || echo "NONE — code compiles clean!"
-          echo "===================== END ====================="
+          echo "===================== ARCHIVE SWIFT ERRORS ====================="
+          grep -nE "error:" /tmp/archive.log | head -100 || echo "NONE"
+          echo "===================== ARCHIVE RESULT: $ARCHIVE_EXIT ====================="
+          cd ..
+          exit $ARCHIVE_EXIT
 
-      - name: Upload raw log
+      - name: Export IPA
+        run: |
+          cat > $HOME/export_options.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>5XC93XX8X6</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath $HOME/Runner.xcarchive \
+            -exportPath $HOME/ipa_out \
+            -exportOptionsPlist $HOME/export_options.plist 2>&1 | tee /tmp/export.log
+          ls -la $HOME/ipa_out/
+
+      - name: Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          IPA=$(find $HOME/ipa_out -name "*.ipa" | head -1)
+          echo "IPA: $IPA"
+          if [ -n "$IPA" ]; then
+            app-store-connect publish \
+              --path "$IPA" \
+              --issuer-id "$ASC_ISSUER_ID" \
+              --key-id "$ASC_KEY_ID" \
+              --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          else
+            echo "No IPA"
+            exit 1
+          fi
+
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: raw-log
-          path: /tmp/raw.log
+          name: ios-build
+          path: |
+            /tmp/archive.log
+            /tmp/export.log
