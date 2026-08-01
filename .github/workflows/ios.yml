@@ -20,9 +20,6 @@ jobs:
           xcodebuild -version
           echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
 
-      - name: Confirm iOS SDK present
-        run: xcodebuild -showsdks | grep -i iphoneos
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -109,22 +106,31 @@ jobs:
       - name: Build signed IPA
         run: |
           set -o pipefail
-          flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log
+          flutter build ipa --release --verbose \
+            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log || true
 
-      - name: Show IPA errors (if any)
+      - name: DUMP SWIFT ERRORS
         if: always()
         run: |
-          echo "########## IPA ERRORS ##########"
-          if [ -f /tmp/ipa.log ]; then
-            grep -nE "error:|Encountered error|Cannot find|no such module|Build input files|not installed" /tmp/ipa.log | head -80 || echo "none"
-            echo "########## LAST 30 ##########"
-            tail -30 /tmp/ipa.log
-          else
-            echo "no ipa.log"
+          echo "===================== ERROR: LINES ====================="
+          grep -nE "error:" /tmp/ipa.log | head -100 || echo "no 'error:' in ipa.log"
+          echo ""
+          echo "===================== STREAMING FILE MENTIONS ====================="
+          grep -nE "Streaming/.*\.swift" /tmp/ipa.log | head -60 || echo "none"
+          echo ""
+          echo "===================== XCRESULT ERRORS ====================="
+          RESULT=$(find ~/Library/Developer/Xcode/DerivedData -name "*.xcresult" 2>/dev/null | head -1)
+          echo "xcresult: $RESULT"
+          if [ -n "$RESULT" ]; then
+            xcrun xcresulttool get --legacy --path "$RESULT" --format json 2>/dev/null > /tmp/xcresult.json || true
+            grep -oE '"message"[^}]*"[^"]*error[^"]*"' /tmp/xcresult.json 2>/dev/null | head -60 || echo "no messages"
+            echo "--- swift files in result ---"
+            grep -oE 'Streaming/[A-Za-z]+\.swift:[0-9]+:[0-9]+[^"]*' /tmp/xcresult.json 2>/dev/null | head -60 || echo "none"
           fi
+          echo "===================== END ====================="
 
       - name: Upload to TestFlight
+        if: success()
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -137,9 +143,6 @@ jobs:
               --issuer-id "$ASC_ISSUER_ID" \
               --key-id "$ASC_KEY_ID" \
               --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          else
-            echo "No IPA produced"
-            exit 1
           fi
 
       - name: Upload artifacts
@@ -149,4 +152,5 @@ jobs:
           name: ios-build
           path: |
             /tmp/ipa.log
+            /tmp/xcresult.json
             build/ios/ipa/*.ipa
