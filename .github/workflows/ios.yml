@@ -103,31 +103,44 @@ jobs:
           keychain add-certificates
           xcode-project use-profiles
 
+      - name: Create ExportOptions.plist
+        run: |
+          cat > $HOME/export_options.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>5XC93XX8X6</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          echo "Created export_options.plist:"
+          cat $HOME/export_options.plist
+
       - name: Build signed IPA
         run: |
           set -o pipefail
-          flutter build ipa --release --verbose \
-            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log || true
+          flutter build ipa --release \
+            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log
 
-      - name: DUMP SWIFT ERRORS
+      - name: Show build result
         if: always()
         run: |
-          echo "===================== ERROR: LINES ====================="
-          grep -nE "error:" /tmp/ipa.log | head -100 || echo "no 'error:' in ipa.log"
-          echo ""
-          echo "===================== STREAMING FILE MENTIONS ====================="
-          grep -nE "Streaming/.*\.swift" /tmp/ipa.log | head -60 || echo "none"
-          echo ""
-          echo "===================== XCRESULT ERRORS ====================="
-          RESULT=$(find ~/Library/Developer/Xcode/DerivedData -name "*.xcresult" 2>/dev/null | head -1)
-          echo "xcresult: $RESULT"
-          if [ -n "$RESULT" ]; then
-            xcrun xcresulttool get --legacy --path "$RESULT" --format json 2>/dev/null > /tmp/xcresult.json || true
-            grep -oE '"message"[^}]*"[^"]*error[^"]*"' /tmp/xcresult.json 2>/dev/null | head -60 || echo "no messages"
-            echo "--- swift files in result ---"
-            grep -oE 'Streaming/[A-Za-z]+\.swift:[0-9]+:[0-9]+[^"]*' /tmp/xcresult.json 2>/dev/null | head -60 || echo "none"
-          fi
-          echo "===================== END ====================="
+          echo "===================== ERROR LINES ====================="
+          grep -nE "error:|Encountered error|No signing certificate|exportArchive|Provisioning" /tmp/ipa.log | head -60 || echo "no matches"
+          echo "===================== LAST 40 ====================="
+          tail -40 /tmp/ipa.log
+          echo "===================== IPA CHECK ====================="
+          ls -la build/ios/ipa/ 2>/dev/null || echo "no ipa dir"
 
       - name: Upload to TestFlight
         if: success()
@@ -143,6 +156,9 @@ jobs:
               --issuer-id "$ASC_ISSUER_ID" \
               --key-id "$ASC_KEY_ID" \
               --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          else
+            echo "No IPA produced"
+            exit 1
           fi
 
       - name: Upload artifacts
@@ -152,5 +168,4 @@ jobs:
           name: ios-build
           path: |
             /tmp/ipa.log
-            /tmp/xcresult.json
             build/ios/ipa/*.ipa
