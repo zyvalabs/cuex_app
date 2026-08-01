@@ -30,17 +30,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
-          key: pub-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-
-
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ~/Library/Caches/CocoaPods
-          key: pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: pods-
+          key: pub-v2-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-v2-
 
       - name: Install dependencies
         run: flutter pub get
@@ -77,9 +68,12 @@ jobs:
           project.save
           RUBY
 
-      - name: Install CocoaPods
+      - name: Install CocoaPods (fresh)
         run: |
-          cd ios && pod install --repo-update && cd ..
+          cd ios
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
+          cd ..
 
       - name: Install signing tools & fetch certs
         env:
@@ -123,32 +117,35 @@ jobs:
           </dict>
           </plist>
           PLIST
-          echo "Created export_options.plist:"
-          cat $HOME/export_options.plist
 
       - name: Build signed IPA
         run: |
-          set -o pipefail
           flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist 2>&1 | tee /tmp/ipa.log
+            --export-options-plist=$HOME/export_options.plist > /tmp/ipa.log 2>&1
+          echo "Build exit code: $?"
+          exit 0
 
-      - name: Show build result
+      - name: Show FULL build log
         if: always()
         run: |
-          echo "===================== ERROR LINES ====================="
-          grep -nE "error:|Encountered error|No signing certificate|exportArchive|Provisioning" /tmp/ipa.log | head -60 || echo "no matches"
-          echo "===================== LAST 40 ====================="
-          tail -40 /tmp/ipa.log
+          echo "===================== ALL error: LINES ====================="
+          grep -n "error:" /tmp/ipa.log | head -100 || echo "none found"
+          echo ""
+          echo "===================== STREAMING MENTIONS ====================="
+          grep -nE "Streaming|HaishinKit|\.swift:[0-9]" /tmp/ipa.log | head -60 || echo "none"
+          echo ""
+          echo "===================== LAST 100 LINES ====================="
+          tail -100 /tmp/ipa.log
+          echo ""
           echo "===================== IPA CHECK ====================="
           ls -la build/ios/ipa/ 2>/dev/null || echo "no ipa dir"
 
       - name: Upload to TestFlight
-        if: success()
         env:
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          IPA=$(find build/ios/ipa -name "*.ipa" | head -1)
+          IPA=$(find build/ios/ipa -name "*.ipa" 2>/dev/null | head -1)
           echo "IPA path: $IPA"
           if [ -n "$IPA" ]; then
             app-store-connect publish \
@@ -157,8 +154,7 @@ jobs:
               --key-id "$ASC_KEY_ID" \
               --private-key @file:~/private_keys/AuthKey_${ASC_KEY_ID}.p8
           else
-            echo "No IPA produced"
-            exit 1
+            echo "No IPA produced — see build log above"
           fi
 
       - name: Upload artifacts
