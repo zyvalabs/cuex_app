@@ -29,8 +29,6 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  pod 'HaishinKit', '~> 1.9.0'
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   target 'RunnerTests' do
@@ -43,10 +41,6 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-      # Downgrade Swift 6 strict concurrency so HaishinKit's NSException
-      # Sendable warning does not become a hard error during archive.
-      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
-      config.build_settings['SWIFT_VERSION'] = '5.0'
     end
   end
 end
