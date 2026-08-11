@@ -278,7 +278,7 @@ class EventDrawController extends GetxController {
       await Permission.storage.request();
       await Permission.photos.request();
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
       );

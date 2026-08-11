@@ -68,18 +68,18 @@ class _YouTubeViewerScreenState extends State<YouTubeViewerScreen> {
                 ],
               ),
             ),
-            Expanded(
-              child: InAppWebView(
-                initialUrlRequest: URLRequest(
-                  url: WebUri('https://www.youtube.com/watch?v=${widget.videoId}'),
-                ),
-                initialSettings: InAppWebViewSettings(
-                  mediaPlaybackRequiresUserGesture: false,
-                  allowsInlineMediaPlayback: true,
-                  javaScriptEnabled: true,
-                ),
-              ),
-            ),
+            // Expanded(
+            //   child: InAppWebView(
+            //     initialUrlRequest: URLRequest(
+            //       url: WebUri('https://www.youtube.com/watch?v=${widget.videoId}'),
+            //     ),
+            //     initialSettings: InAppWebViewSettings(
+            //       mediaPlaybackRequiresUserGesture: false,
+            //       allowsInlineMediaPlayback: true,
+            //       javaScriptEnabled: true,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

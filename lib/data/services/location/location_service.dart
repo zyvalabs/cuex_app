@@ -1,6 +1,7 @@
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
+
 class LocationService {
   // ─────────────────────────────────────────
   // Get current position — production ready
@@ -50,7 +51,8 @@ class LocationService {
   // ─────────────────────────────────────────
   Future<Map<String, String>> getCityFromPosition(Position position) async {
     try {
-      final placemarks = await placemarkFromCoordinates(
+      final geocoding = Geocoding();
+      final placemarks = await geocoding.placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
