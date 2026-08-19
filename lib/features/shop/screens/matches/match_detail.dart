@@ -77,7 +77,26 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     if (isLandscape && hasVideo) {
       return Scaffold(
         backgroundColor: Colors.black,
-        body: MatchVideoPlayer(youtubeLink: widget.match.youtubeLink!),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.play_circle_outline,
+                size: 72,
+                color: Colors.grey,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Video Coming Soon',
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -202,9 +221,26 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                     child: Column(
                       children: [
                         // ── Video player ────────────
-                        if (hasVideo)
-                          MatchVideoPlayer(
-                              youtubeLink: widget.match.youtubeLink!),
+
+                          if (hasVideo)
+                            Container(
+                              height: 200,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.black12,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'Video Coming Soon',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
 
                         // ── Match metadata ──────────
                         MatchMetadata(

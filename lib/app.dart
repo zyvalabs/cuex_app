@@ -20,7 +20,7 @@ class App extends StatelessWidget {
       title: TTexts.appName,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
-      themeMode: ThemeMode.dark, // ✅ always dark
+      themeMode: ThemeMode.light, // ✅ always dark
       debugShowCheckedModeBanner: false,
       initialBinding: GeneralBindings(),
       getPages: AppRoutes.pages,

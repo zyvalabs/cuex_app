@@ -35,6 +35,8 @@ class YouTubeService {
           'connected': true,
           'channel_name': channelInfo['name'],
           'channel_image': channelInfo['image'],
+          // liveStreamingEnabled is NOT set here — we only find out for real
+          // when the user actually attempts to create a broadcast (see below).
         }
       });
 
@@ -70,6 +72,8 @@ class YouTubeService {
     } catch (e) {
       dev.log('❌ getAccessToken error: $e');
       if (e is YouTubeAuthException) rethrow;
+      // Gap #5 fix: if silent refresh fails mid-flow, surface a clear
+      // reconnect message instead of letting a raw exception bubble up.
       throw YouTubeAuthException('YouTube session lost. Please reconnect in settings.');
     }
   }
@@ -96,6 +100,16 @@ class YouTubeService {
     };
   }
 
+  /// Gap #4 fix: read the last-known live-streaming-enabled status from
+  /// Firestore, so the UI doesn't need to re-attempt an API call just to
+  /// know the channel's status on every screen load.
+  /// Returns null if we've never actually attempted a broadcast yet
+  /// (i.e. status is unknown).
+  Future<bool?> getLiveStreamingEnabledStatus(String userId) async {
+    final doc = await _firestore.collection('Users').doc(userId).get();
+    return doc.data()?['youtube']?['liveStreamingEnabled'];
+  }
+
   // ==============================
   // Internal — fetch channel from API
   // ==============================
@@ -105,6 +119,8 @@ class YouTubeService {
       Uri.parse('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true'),
       headers: {'Authorization': 'Bearer $token'},
     );
+
+    _checkForApiErrors(response); // Gap #1/#2/#3 fix — shared error checker
 
     final data = jsonDecode(response.body);
     if (data['items'] == null || data['items'].isEmpty) throw YouTubeChannelNotFoundException();
@@ -131,69 +147,106 @@ class YouTubeService {
   // ==============================
   // Create live broadcast
   // ==============================
+  //
+  // This is the ONLY point where we can genuinely learn whether the
+  // channel is verified/live-streaming-enabled — YouTube doesn't expose
+  // a standalone "check status" endpoint, so the attempt IS the check.
+  //
+  // categoryId, privacyStatus, and scheduledStartTime are now parameters
+  // instead of hardcoded (Gap #6 fix), so the UI's visibility selector /
+  // schedule picker / category can actually drive this call.
 
   Future<Map<String, String>> createLiveBroadcast({
     required String userId,
     required String title,
     required String description,
     required List<String> tags,
+    String privacyStatus = 'public', // 'public' | 'unlisted' | 'private'
+    String categoryId = '17', // 17 = Sports
+    DateTime? scheduledStartTime, // null = start ~1 min from now
   }) async {
     final token = await getAccessToken();
 
-    final broadcastResponse = await http.post(
-      Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts?part=snippet,status,contentDetails'),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'snippet': {
-          'title': title,
-          'description': description,
-          'tags': tags,
-          'scheduledStartTime': DateTime.now().add(const Duration(minutes: 1)).toUtc().toIso8601String(),
-        },
-        'status': {
-          'privacyStatus': 'public',
-          'selfDeclaredMadeForKids': false,
-          'embeddable': true,
-        },
-        'contentDetails': {
-          'enableAutoStart': true,
-          'enableAutoStop': true,
-          'recordFromStart': true,
-          'enableEmbed': true,
-        },
-      }),
-    );
+    try {
+      final broadcastResponse = await http.post(
+        Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts?part=snippet,status,contentDetails'),
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'snippet': {
+            'title': title,
+            'description': description,
+            'tags': tags,
+            'categoryId': categoryId,
+            'scheduledStartTime': (scheduledStartTime ?? DateTime.now().add(const Duration(minutes: 1)))
+                .toUtc()
+                .toIso8601String(),
+          },
+          'status': {
+            'privacyStatus': privacyStatus,
+            'selfDeclaredMadeForKids': false,
+            'embeddable': true,
+          },
+          'contentDetails': {
+            'enableAutoStart': true,
+            'enableAutoStop': true,
+            'recordFromStart': true,
+            'enableEmbed': true,
+          },
+        }),
+      );
 
-    final broadcast = jsonDecode(broadcastResponse.body);
-    final broadcastId = broadcast['id'];
+      // Gap #1/#2/#3 fix: check status code + specific error reasons
+      // BEFORE trying to parse the body as a successful broadcast.
+      _checkForApiErrors(broadcastResponse);
 
-    final streamResponse = await http.post(
-      Uri.parse('https://www.googleapis.com/youtube/v3/liveStreams?part=snippet,cdn'),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'snippet': {'title': '$title Stream'},
-        'cdn': {'frameRate': 'variable', 'ingestionType': 'rtmp', 'resolution': 'variable'},
-      }),
-    );
+      final broadcast = jsonDecode(broadcastResponse.body);
+      final broadcastId = broadcast['id'];
 
-    final stream = jsonDecode(streamResponse.body);
-    final streamId = stream['id'];
-    final streamKey = stream['cdn']['ingestionInfo']['streamName'];
-    final rtmpUrl = stream['cdn']['ingestionInfo']['ingestionAddress'];
+      final streamResponse = await http.post(
+        Uri.parse('https://www.googleapis.com/youtube/v3/liveStreams?part=snippet,cdn'),
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'snippet': {'title': '$title Stream'},
+          'cdn': {'frameRate': 'variable', 'ingestionType': 'rtmp', 'resolution': 'variable'},
+        }),
+      );
 
-    await http.post(
-      Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts/bind?id=$broadcastId&part=id&streamId=$streamId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+      _checkForApiErrors(streamResponse);
 
-    dev.log('✅ Broadcast created: $broadcastId embeddable: true');
+      final stream = jsonDecode(streamResponse.body);
+      final streamId = stream['id'];
+      final streamKey = stream['cdn']['ingestionInfo']['streamName'];
+      final rtmpUrl = stream['cdn']['ingestionInfo']['ingestionAddress'];
 
-    return {
-      'broadcast_id': broadcastId,
-      'stream_key': streamKey,
-      'rtmp_url': rtmpUrl,
-      'youtube_link': 'https://www.youtube.com/watch?v=$broadcastId',
-    };
+      final bindResponse = await http.post(
+        Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts/bind?id=$broadcastId&part=id&streamId=$streamId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      _checkForApiErrors(bindResponse);
+
+      dev.log('✅ Broadcast created: $broadcastId embeddable: true');
+
+      // Success — this call working at all confirms the channel IS
+      // live-streaming enabled, so persist that for next time (Gap #4 fix).
+      await _firestore.collection('Users').doc(userId).update({
+        'youtube.liveStreamingEnabled': true,
+      });
+
+      return {
+        'broadcast_id': broadcastId,
+        'stream_key': streamKey,
+        'rtmp_url': rtmpUrl,
+        'youtube_link': 'https://www.youtube.com/watch?v=$broadcastId',
+      };
+    } on LiveStreamingNotEnabledException {
+      // Persist the negative result too, so the UI can show the
+      // verification warning next time without re-attempting the call.
+      await _firestore.collection('Users').doc(userId).update({
+        'youtube.liveStreamingEnabled': false,
+      });
+      rethrow;
+    }
   }
 
   // ==============================
@@ -206,7 +259,7 @@ class YouTubeService {
       Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts/transition?broadcastStatus=live&id=$broadcastId&part=status'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    if (response.statusCode >= 400) throw YouTubeAuthException('Failed to start broadcast.');
+    _checkForApiErrors(response);
     dev.log('✅ Broadcast started: $broadcastId');
   }
 
@@ -220,8 +273,39 @@ class YouTubeService {
       Uri.parse('https://www.googleapis.com/youtube/v3/liveBroadcasts/transition?broadcastStatus=complete&id=$broadcastId&part=status'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    if (response.statusCode >= 400) throw YouTubeAuthException('Failed to stop broadcast.');
+    _checkForApiErrors(response);
     dev.log('✅ Broadcast stopped: $broadcastId');
+  }
+
+  // ==============================
+  // Shared error checker (Gaps #1, #2, #3 fix)
+  // ==============================
+  //
+  // Inspects any YouTube API http.Response and throws the correct
+  // specific exception based on the error "reason" field, instead of
+  // silently continuing to parse a failed response as if it succeeded.
+  void _checkForApiErrors(http.Response response) {
+    if (response.statusCode < 400) return; // success, nothing to do
+
+    Map<String, dynamic>? errorBody;
+    try {
+      errorBody = jsonDecode(response.body);
+    } catch (_) {
+      // body wasn't valid JSON — fall through to generic exception below
+    }
+
+    final errors = errorBody?['error']?['errors'] as List?;
+    final reason = errors != null && errors.isNotEmpty ? errors[0]['reason'] : null;
+
+    switch (reason) {
+      case 'liveStreamingNotEnabled':
+        throw LiveStreamingNotEnabledException();
+      case 'quotaExceeded':
+        throw YouTubeQuotaException();
+      default:
+        final message = errorBody?['error']?['message'] ?? 'YouTube API request failed (${response.statusCode}).';
+        throw YouTubeAuthException(message);
+    }
   }
 }
 

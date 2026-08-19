@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cuex_app/features/obs/screen/dashbaord_screen.dart';
 import 'package:cuex_app/features/shop/screens/home/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -15,6 +16,7 @@ import '../../../features/personalization/controllers/user_controller.dart';
 import '../../../features/personalization/screens/profile/profile.dart';
 import '../../../features/shop/controllers/venue_controller.dart';
 import '../../../home_menu.dart';
+import '../../../screens/dashboard/dashboard_screen.dart';
 import '../../../utils/exceptions/firebase_auth_exceptions.dart';
 import '../../../utils/exceptions/firebase_exceptions.dart';
 import '../../../utils/exceptions/format_exceptions.dart';
@@ -102,7 +104,7 @@ class AuthenticationRepository extends GetxController {
       }
 
       Get.offAll(
-            () => const HomeScreen(),
+            () => const DashboardScreen(),
         transition: Transition.noTransition,
         duration: Duration.zero,
       );
