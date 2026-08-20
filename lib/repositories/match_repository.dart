@@ -41,6 +41,24 @@ class MatchRepository {
     return snapshot.docs.map((doc) => MatchModel.fromJson(doc.data(), id: doc.id)).toList();
   }
 
+  /// Fetches all matches linked to a specific event, oldest first
+  /// (so rounds show in the order they happened).
+  Future<List<MatchModel>> getMatchesByEvent(String eventId) async {
+    // ignore: avoid_print
+    print('🟣 [MatchRepository] Querying Matches where eventId=$eventId...');
+
+    final snapshot = await _firestore
+        .collection('Matches')
+        .where('eventId', isEqualTo: eventId)
+        .orderBy('createdAt', descending: false)
+        .get();
+
+    // ignore: avoid_print
+    print('🟣 [MatchRepository] Query returned ${snapshot.docs.length} documents');
+
+    return snapshot.docs.map((doc) => MatchModel.fromJson(doc.data(), id: doc.id)).toList();
+  }
+
   /// Deletes a match document by ID.
   Future<void> deleteMatch(String matchId) async {
     // ignore: avoid_print

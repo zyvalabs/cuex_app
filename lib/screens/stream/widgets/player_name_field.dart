@@ -50,6 +50,12 @@ class PlayerNameField extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               borderSide: BorderSide.none,
             ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.qr_code_scanner, color: Colors.grey),
+              onPressed: () {
+                // TODO: open camera scanner (mobile_scanner) to scan player QR
+              },
+            ),
           ),
         ),
       ],

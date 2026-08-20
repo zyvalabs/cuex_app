@@ -31,6 +31,21 @@ class MatchCreationController extends GetxController {
   void selectSport(SportsModel sport) => selectedSport.value = sport;
   bool isSelected(SportsModel sport) => selectedSport.value.name == sport.name;
 
+  // ---------------- Event linkage (null for standalone practice matches) ----------------
+  final RxnString eventId = RxnString();
+  final TextEditingController roundNameController = TextEditingController();
+
+  /// Called when starting a match from within an EventDetailsScreen's
+  /// "Add Match" button — locks the sport (inherited from the event) and
+  /// tags this match with the event's id, so the wizard can skip sport
+  /// selection and show the Round Name field instead.
+  void presetFromEvent({required String eventIdValue, required SportsModel sport}) {
+    eventId.value = eventIdValue;
+    selectedSport.value = sport;
+  }
+
+  bool get isLinkedToEvent => eventId.value != null;
+
   // ==========================================================
   // STEP 2: Match setup — type, format, players
   // ==========================================================
@@ -242,6 +257,8 @@ class MatchCreationController extends GetxController {
       streamKey: resolvedStreamKey,
       createdBy: _userId,
       createdAt: DateTime.now(),
+      eventId: eventId.value,
+      roundName: roundNameController.text.trim().isNotEmpty ? roundNameController.text.trim() : null,
     );
   }
 
@@ -321,6 +338,7 @@ class MatchCreationController extends GetxController {
     for (final c in playerControllers) {
       c.dispose();
     }
+    roundNameController.dispose();
     super.onClose();
   }
 }

@@ -9,9 +9,8 @@ import '../../controllers/match_creation_controller.dart';
 import '../../core/utils/constants/app_colors.dart';
 import '../../core/widgets/step/step_widget.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../events/widgets/round_name_section.dart';
 import '../stream/streaming/streaming_platform_screen.dart';
-import '../stream/streaming_platform_screen.dart';
-
 
 /// Thin screen — just layout, stacking pre-built sections.
 /// All state and validation logic lives on MatchCreationController.
@@ -64,6 +63,18 @@ class MatchSetupScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 const PlayerFieldsSection(),
+
+                // Round Name only shows when this match is linked to an event
+                Obx(() => controller.isLinkedToEvent
+                    ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: const [
+                    SizedBox(height: 24),
+                    RoundNameSection(),
+                  ],
+                )
+                    : const SizedBox.shrink()),
+
                 const SizedBox(height: 30),
               ],
             ),

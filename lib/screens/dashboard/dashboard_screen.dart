@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import '../../core/utils/constants/app_colors.dart';
 import '../../core/utils/constants/image_strings_name.dart';
 import '../../core/widgets/cards/action_card.dart';
+
+import '../../screens/events/events_screen.dart';
 import '../../widgets/common/custom_app_bar.dart';
+import '../settings/settings.dart';
 import '../stream/stream_match_screen.dart';
 
 
@@ -20,7 +23,15 @@ class DashboardScreen extends StatelessWidget {
         backgroundColor: AppColors.green,
         titleWidget: Image.asset(AppImages.cueCam, height: 40),
         rightActions: [
-          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingScreen()),
+              );
+            },
+          ),
         ],
       ),
       body: SafeArea(
@@ -76,7 +87,10 @@ class DashboardScreen extends StatelessWidget {
                       title: 'STREAM RANKED EVENTS',
                       subtitle: 'with automatic scoring',
                       onTap: () {
-                        // TODO: navigate to tournament match setup
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const EventScreen()),
+                        );
                       },
                     ),
                   ),

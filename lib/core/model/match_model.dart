@@ -29,6 +29,10 @@ class MatchModel {
   final String createdBy; // userId of whoever created the match
   final DateTime createdAt;
 
+  // -- Event linkage (null for standalone practice matches) --
+  final String? eventId;
+  final String? roundName; // e.g. "Round of 16", "Quarterfinal", "Final"
+
   const MatchModel({
     this.id,
     required this.sport,
@@ -48,6 +52,8 @@ class MatchModel {
     this.streamKey,
     required this.createdBy,
     required this.createdAt,
+    this.eventId,
+    this.roundName,
   });
 
   /// Converts this model into a Firestore-writable map.
@@ -71,6 +77,8 @@ class MatchModel {
     'streamKey': streamKey,
     'createdBy': createdBy,
     'createdAt': Timestamp.fromDate(createdAt),
+    'eventId': eventId,
+    'roundName': roundName,
   };
 
   /// Builds a MatchModel back from a Firestore document — useful later
@@ -99,6 +107,8 @@ class MatchModel {
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      eventId: data['eventId'],
+      roundName: data['roundName'],
     );
   }
 }
