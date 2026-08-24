@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../common/widgets/buttons/app_button.dart';
 import '../../controllers/match_creation_controller.dart';
+import '../../controllers/match_setup_controller.dart';
 import '../../core/model/sports_model.dart';
 import '../../core/utils/constants/app_colors.dart';
 import '../../core/widgets/cards/sport_options_card.dart';
@@ -11,20 +12,22 @@ import '../../core/widgets/title/section_title_widget.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../matches/match_setup_screen.dart';
 
-
 class StreamMatchScreen extends StatelessWidget {
   const StreamMatchScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Get.put() only creates a new instance if one isn't already registered —
-    // safe to call here since this is the FIRST screen in the wizard flow.
+    // First screen in the wizard flow — registers ALL the sub-controllers
+    // used across the flow (Get.put() only creates if not already registered).
     // Every other screen must use Get.find() only, never Get.put() again,
     // or state gets wiped on rebuild.
-    final controller = Get.isRegistered<MatchCreationController>()
-        ? Get.find<MatchCreationController>()
+    final controller = Get.isRegistered<MatchSetupController>()
+        ? Get.find<MatchSetupController>()
+        : Get.put(MatchSetupController());
 
-        : Get.put(MatchCreationController());
+    if (!Get.isRegistered<MatchCreationController>()) {
+      Get.put(MatchCreationController());
+    }
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -53,8 +56,8 @@ class StreamMatchScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
               child: StepWidget(totalSteps: 4, currentStep: 1),
             ),
             const SizedBox(height: 24),
@@ -78,9 +81,6 @@ class StreamMatchScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final sport = kSports[index];
 
-                  // Obx wraps EACH card individually — required since
-                  // GridView.builder's itemBuilder runs lazily during layout,
-                  // not synchronously inside a single outer Obx.
                   return Obx(() => SportOptionCard(
                     sportName: sport.name,
                     imagePath: sport.imagePath,

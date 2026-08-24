@@ -1,3 +1,4 @@
+import 'package:cuex_app/controllers/match_setup_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,7 +13,7 @@ class RoundNameSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<MatchSetupController>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

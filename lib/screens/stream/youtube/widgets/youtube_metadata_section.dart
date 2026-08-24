@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../controllers/match_creation_controller.dart';
+import '../../../../controllers/youtube_setup_controller.dart';
 
 
 /// Title + description fields — full UI inline, pre-filled from
@@ -14,7 +15,7 @@ class YoutubeMetadataSection extends StatefulWidget {
 }
 
 class _YoutubeMetadataSectionState extends State<YoutubeMetadataSection> {
-  final controller = Get.find<MatchCreationController>();
+  final controller = Get.find<YoutubeSetupController>();
   late final TextEditingController titleController;
   late final TextEditingController descriptionController;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../controllers/match_creation_controller.dart';
+import '../../../../controllers/youtube_setup_controller.dart';
 
 
 /// Shows either the login prompt (disconnected) or the connected channel
@@ -10,7 +11,7 @@ class YoutubeConnectionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<YoutubeSetupController>();
 
     return Obx(() {
       if (controller.isYoutubeConnected.value) {

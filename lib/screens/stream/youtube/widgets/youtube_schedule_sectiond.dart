@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../controllers/match_creation_controller.dart';
+import '../../../../controllers/youtube_setup_controller.dart';
 import '../../../../core/widgets/radio/radio_option.dart';
 
 /// Start Now / Schedule for Later — full UI inline, wired to controller,
@@ -11,7 +12,7 @@ class YoutubeScheduleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<YoutubeSetupController>();
 
     return Obx(() {
       final isScheduled = controller.isScheduled.value;

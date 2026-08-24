@@ -33,6 +33,10 @@ class MatchModel {
   final String? eventId;
   final String? roundName; // e.g. "Round of 16", "Quarterfinal", "Final"
 
+  // -- Optional team names, shown alongside player names on each side --
+  final String? teamNameA;
+  final String? teamNameB;
+
   const MatchModel({
     this.id,
     required this.sport,
@@ -54,6 +58,8 @@ class MatchModel {
     required this.createdAt,
     this.eventId,
     this.roundName,
+    this.teamNameA,
+    this.teamNameB,
   });
 
   /// Converts this model into a Firestore-writable map.
@@ -79,6 +85,8 @@ class MatchModel {
     'createdAt': Timestamp.fromDate(createdAt),
     'eventId': eventId,
     'roundName': roundName,
+    'teamNameA': teamNameA,
+    'teamNameB': teamNameB,
   };
 
   /// Builds a MatchModel back from a Firestore document — useful later
@@ -109,6 +117,8 @@ class MatchModel {
           : DateTime.now(),
       eventId: data['eventId'],
       roundName: data['roundName'],
+      teamNameA: data['teamNameA'],
+      teamNameB: data['teamNameB'],
     );
   }
 }

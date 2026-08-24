@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../common/widgets/buttons/app_button.dart';
 import '../../../controllers/match_creation_controller.dart';
+import '../../../controllers/rtmp_setup_controller.dart';
 import '../../../core/utils/constants/app_colors.dart';
 import '../../../core/widgets/step/step_widget.dart';
 import '../../../core/widgets/title/section_title_widget.dart';
@@ -10,7 +11,8 @@ import '../../../widgets/common/custom_app_bar.dart';
 import '../../matches/match_detail_screen.dart';
 
 
-/// Thin screen — Server URL + Stream Key fields, wired directly to controller.
+/// Thin screen — Server URL + Stream Key fields, wired to RtmpSetupController.
+/// MatchCreationController orchestrates the final createMatch() call.
 class RtmpSetupScreen extends StatefulWidget {
   const RtmpSetupScreen({super.key});
 
@@ -19,15 +21,20 @@ class RtmpSetupScreen extends StatefulWidget {
 }
 
 class _RtmpSetupScreenState extends State<RtmpSetupScreen> {
-  final controller = Get.find<MatchCreationController>();
+  final rtmpController = Get.isRegistered<RtmpSetupController>()
+      ? Get.find<RtmpSetupController>()
+      : Get.put(RtmpSetupController());
+
+  final matchCreationController = Get.find<MatchCreationController>();
+
   late final TextEditingController urlController;
   late final TextEditingController keyController;
 
   @override
   void initState() {
     super.initState();
-    urlController = TextEditingController(text: controller.rtmpUrl.value);
-    keyController = TextEditingController(text: controller.streamKey.value);
+    urlController = TextEditingController(text: rtmpController.rtmpUrl.value);
+    keyController = TextEditingController(text: rtmpController.streamKey.value);
   }
 
   @override
@@ -52,20 +59,21 @@ class _RtmpSetupScreenState extends State<RtmpSetupScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20),
         child: Obx(() => AppButton(
-          text: 'Go Live',
-          onPressed: controller.isRtmpSetupValid
+          text: matchCreationController.isSaving.value ? 'Creating Match...' : 'Create Match',
+          isLoading: matchCreationController.isSaving.value,
+          onPressed: rtmpController.isRtmpSetupValid && !matchCreationController.isSaving.value
               ? () async {
-            final matchId = await controller.createMatch();
+            final matchId = await matchCreationController.createMatch();
             if (matchId != null) {
               if (context.mounted) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MatchDetailsScreen()),
+                  MaterialPageRoute(builder: (context) => MatchDetailsScreen(freshlyCreatedMatchId: matchId)),
                 );
               }
-            } else {
+            } else if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(controller.saveError.value ?? 'Failed to create match')),
+                SnackBar(content: Text(matchCreationController.saveError.value ?? 'Failed to create match')),
               );
             }
           }
@@ -91,8 +99,8 @@ class _RtmpSetupScreenState extends State<RtmpSetupScreen> {
               TextField(
                 controller: urlController,
                 onChanged: (val) {
-                  controller.setRtmpUrl(val);
-                  setState(() {}); // refresh Go Live button state
+                  rtmpController.setRtmpUrl(val);
+                  setState(() {});
                 },
                 decoration: InputDecoration(
                   hintText: 'rtmp://...',
@@ -113,8 +121,8 @@ class _RtmpSetupScreenState extends State<RtmpSetupScreen> {
                 controller: keyController,
                 obscureText: true,
                 onChanged: (val) {
-                  controller.setStreamKey(val);
-                  setState(() {}); // refresh Go Live button state
+                  rtmpController.setStreamKey(val);
+                  setState(() {});
                 },
                 decoration: InputDecoration(
                   hintText: 'Enter stream key',

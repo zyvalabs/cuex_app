@@ -1,17 +1,16 @@
 import 'package:cuex_app/screens/events/widgets/event_match_list_item.dart';
 import 'package:cuex_app/screens/events/widgets/event_summary_card.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../common/widgets/buttons/app_button.dart';
 import '../../controllers/event_matches_controller.dart';
 import '../../controllers/match_creation_controller.dart';
+import '../../controllers/match_setup_controller.dart';
 import '../../core/model/event_model.dart';
 import '../../core/model/sports_model.dart';
 import '../../core/utils/constants/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
 import '../matches/match_detail_screen.dart';
 import '../matches/match_setup_screen.dart';
 
@@ -37,16 +36,22 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<void> _addMatch() async {
-    final matchController = Get.isRegistered<MatchCreationController>()
-        ? Get.find<MatchCreationController>()
-        : Get.put(MatchCreationController());
+    final matchSetupController = Get.isRegistered<MatchSetupController>()
+        ? Get.find<MatchSetupController>()
+        : Get.put(MatchSetupController());
+
+    // Also ensure MatchCreationController exists — needed later for the
+    // final save step (platform choice + createMatch()).
+    if (!Get.isRegistered<MatchCreationController>()) {
+      Get.put(MatchCreationController());
+    }
 
     final sport = kSports.firstWhere(
           (s) => s.name == widget.event.sport,
       orElse: () => kSports.first,
     );
 
-    matchController.presetFromEvent(eventIdValue: widget.event.id!, sport: sport);
+    matchSetupController.presetFromEvent(eventIdValue: widget.event.id!, sport: sport);
 
     await Navigator.push(
       context,

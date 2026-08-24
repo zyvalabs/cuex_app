@@ -8,13 +8,15 @@ import 'package:get/get.dart';
 
 import '../../../common/widgets/buttons/app_button.dart';
 import '../../../controllers/match_creation_controller.dart';
+import '../../../controllers/youtube_setup_controller.dart';
 import '../../../core/utils/constants/app_colors.dart';
 import '../../../core/widgets/step/step_widget.dart';
 import '../../../widgets/common/custom_app_bar.dart';
 import '../../matches/match_detail_screen.dart';
 
 /// Thin screen — just layout, stacking pre-built sections.
-/// All state and logic lives on MatchCreationController.
+/// YoutubeSetupController holds connection/metadata state;
+/// MatchCreationController orchestrates the final createMatch() call.
 class YoutubeSetupScreen extends StatefulWidget {
   const YoutubeSetupScreen({super.key});
 
@@ -23,14 +25,18 @@ class YoutubeSetupScreen extends StatefulWidget {
 }
 
 class _YoutubeSetupScreenState extends State<YoutubeSetupScreen> {
-  final controller = Get.find<MatchCreationController>();
+  final youtubeController = Get.isRegistered<YoutubeSetupController>()
+      ? Get.find<YoutubeSetupController>()
+      : Get.put(YoutubeSetupController());
+
+  final matchCreationController = Get.find<MatchCreationController>();
 
   @override
   void initState() {
     super.initState();
     // Check if user already has YouTube connected from a previous session,
     // so they don't have to log in again every time.
-    controller.loadExistingYoutubeConnection();
+    youtubeController.loadExistingYoutubeConnection();
   }
 
   @override
@@ -48,25 +54,22 @@ class _YoutubeSetupScreenState extends State<YoutubeSetupScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(20),
         child: Obx(() => AppButton(
-          text: controller.isSaving.value ? 'Creating Match...' : 'Create Match',
-          isLoading: controller.isSaving.value,
-          onPressed: controller.isYoutubeConnected.value && !controller.isSaving.value
+          text: matchCreationController.isSaving.value ? 'Creating Match...' : 'Create Match',
+          isLoading: matchCreationController.isSaving.value,
+          onPressed: youtubeController.isYoutubeConnected.value && !matchCreationController.isSaving.value
               ? () async {
-
-
-            final matchId = await controller.createMatch();
-
+            final matchId = await matchCreationController.createMatch();
 
             if (matchId != null) {
               if (context.mounted) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MatchDetailsScreen()),
+                  MaterialPageRoute(builder: (context) => MatchDetailsScreen(freshlyCreatedMatchId: matchId)),
                 );
               }
             } else if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(controller.saveError.value ?? 'Failed to create match')),
+                SnackBar(content: Text(matchCreationController.saveError.value ?? 'Failed to create match')),
               );
             }
           }
@@ -86,8 +89,7 @@ class _YoutubeSetupScreenState extends State<YoutubeSetupScreen> {
 
                 const YoutubeConnectionSection(),
 
-                // Rest of the form only shows once connected
-                Obx(() => controller.isYoutubeConnected.value
+                Obx(() => youtubeController.isYoutubeConnected.value
                     ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: const [

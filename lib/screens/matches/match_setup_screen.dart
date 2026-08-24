@@ -1,3 +1,4 @@
+import 'package:cuex_app/controllers/match_setup_controller.dart';
 import 'package:cuex_app/screens/matches/widgets/format_section.dart';
 import 'package:cuex_app/screens/matches/widgets/match_setup_section.dart';
 import 'package:cuex_app/screens/matches/widgets/player_fields_section.dart';
@@ -19,7 +20,7 @@ class MatchSetupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<MatchSetupController>();
 
     return Scaffold(
       backgroundColor: AppColors.white,

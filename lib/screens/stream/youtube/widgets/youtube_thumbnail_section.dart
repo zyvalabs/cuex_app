@@ -1,3 +1,4 @@
+import 'package:cuex_app/controllers/youtube_setup_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../controllers/match_creation_controller.dart';
@@ -11,7 +12,7 @@ class YoutubeThumbnailSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<YoutubeSetupController>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

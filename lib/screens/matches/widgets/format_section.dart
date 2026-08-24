@@ -1,3 +1,4 @@
+import 'package:cuex_app/controllers/match_setup_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,7 +16,7 @@ class FormatSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<MatchCreationController>();
+    final controller = Get.find<MatchSetupController>();
 
     return Obx(() {
       final sportName = controller.selectedSport.value.name;
@@ -37,7 +38,7 @@ class FormatSection extends StatelessWidget {
     });
   }
 
-  Widget _buildSportSpecificField(MatchCreationController controller, String sportName) {
+  Widget _buildSportSpecificField(MatchSetupController controller, String sportName) {
     switch (sportName) {
       case 'Snooker':
         return OptionSelectorWidget(
