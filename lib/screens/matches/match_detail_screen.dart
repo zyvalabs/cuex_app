@@ -1,23 +1,23 @@
-import 'package:cuex_app/controllers/match_setup_controller.dart';
 import 'package:cuex_app/screens/matches/widgets/delete_match_dialog.dart';
 import 'package:cuex_app/screens/matches/widgets/match_summary_card.dart';
 import 'package:cuex_app/screens/matches/widgets/stream_ingest_card.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../common/widgets/buttons/app_button.dart';
 import '../../controllers/match_creation_controller.dart';
+import '../../controllers/match_setup_controller.dart';
 import '../../controllers/rtmp_setup_controller.dart';
 import '../../controllers/youtube_setup_controller.dart';
 import '../../core/model/match_model.dart';
 import '../../core/utils/constants/app_colors.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../live streaming/go_live_camera_screen.dart';
-import '../scoring/scoring_screen.dart';
-
-class MatchDetailsScreen extends StatelessWidget {
+import '../scoring/scoring_screen.dart';class MatchDetailsScreen extends StatelessWidget {
   final MatchModel? match;
-
   // Used only in the fresh-creation flow (match == null), since the
   // just-created matchId isn't part of a MatchModel object yet at that
   // point — passed directly by whichever screen called createMatch().
@@ -34,20 +34,17 @@ class MatchDetailsScreen extends StatelessWidget {
         matchId: match!.id,
         sport: match!.sport,
         matchType: match!.matchType,
-        format:
-            match!.format.isNotEmpty
-                ? '${match!.format} · Best of ${match!.bestOfFrames}'
-                : 'Best of ${match!.bestOfFrames}',
+        format: match!.format.isNotEmpty
+            ? '${match!.format} · Best of ${match!.bestOfFrames}'
+            : 'Best of ${match!.bestOfFrames}',
         playerNames: match!.playerNames,
         teamNameA: match!.teamNameA,
         teamNameB: match!.teamNameB,
-        youtubeLink:
-            match!.streamPlatform == 'YouTube' &&
-                    match!.youtubeBroadcastId != null
-                ? 'https://www.youtube.com/watch?v=${match!.youtubeBroadcastId}'
-                : null,
-        rtmpUrl: match!.streamPlatform == 'RTMP' ? match!.rtmpUrl : null,
-        streamKey: match!.streamPlatform == 'RTMP' ? match!.streamKey : null,
+        youtubeLink: match!.streamPlatform == 'YouTube' && match!.youtubeBroadcastId != null
+            ? 'https://www.youtube.com/watch?v=${match!.youtubeBroadcastId}'
+            : null,
+        rtmpUrl: match!.rtmpUrl,
+        streamKey: match!.streamKey,
         showDelete: true,
       );
     }
@@ -60,15 +57,14 @@ class MatchDetailsScreen extends StatelessWidget {
       String? rtmpUrl;
       String? streamKey;
 
-      if (matchCreation.streamPlatform.value == 'YouTube' &&
-          Get.isRegistered<YoutubeSetupController>()) {
+      if (matchCreation.streamPlatform.value == 'YouTube' && Get.isRegistered<YoutubeSetupController>()) {
         final youtube = Get.find<YoutubeSetupController>();
         if (youtube.createdYoutubeBroadcastId.value != null) {
-          youtubeLink =
-              'https://www.youtube.com/watch?v=${youtube.createdYoutubeBroadcastId.value}';
+          youtubeLink = 'https://www.youtube.com/watch?v=${youtube.createdYoutubeBroadcastId.value}';
         }
-      } else if (matchCreation.streamPlatform.value == 'RTMP' &&
-          Get.isRegistered<RtmpSetupController>()) {
+        rtmpUrl = youtube.createdRtmpUrl.value;
+        streamKey = youtube.createdStreamKey.value;
+      } else if (matchCreation.streamPlatform.value == 'RTMP' && Get.isRegistered<RtmpSetupController>()) {
         final rtmp = Get.find<RtmpSetupController>();
         rtmpUrl = rtmp.rtmpUrl.value;
         streamKey = rtmp.streamKey.value;
@@ -79,23 +75,19 @@ class MatchDetailsScreen extends StatelessWidget {
         matchId: freshlyCreatedMatchId,
         sport: matchSetup.selectedSport.value.name,
         matchType: matchSetup.selectedMatchType.value ?? '',
-        format:
-            matchSetup.needsFormatSelector
-                ? '${matchSetup.selectedFormatValue.value} · Best of ${matchSetup.bestOfFrames.value}'
-                : 'Best of ${matchSetup.bestOfFrames.value}',
-        playerNames:
-            matchSetup.playerControllers
-                .take(matchSetup.playerFieldCount)
-                .map((c) => c.text.trim())
-                .toList(),
-        teamNameA:
-            matchSetup.teamNameAController.text.trim().isNotEmpty
-                ? matchSetup.teamNameAController.text.trim()
-                : null,
-        teamNameB:
-            matchSetup.teamNameBController.text.trim().isNotEmpty
-                ? matchSetup.teamNameBController.text.trim()
-                : null,
+        format: matchSetup.needsFormatSelector
+            ? '${matchSetup.selectedFormatValue.value} · Best of ${matchSetup.bestOfFrames.value}'
+            : 'Best of ${matchSetup.bestOfFrames.value}',
+        playerNames: matchSetup.playerControllers
+            .take(matchSetup.playerFieldCount)
+            .map((c) => c.text.trim())
+            .toList(),
+        teamNameA: matchSetup.teamNameAController.text.trim().isNotEmpty
+            ? matchSetup.teamNameAController.text.trim()
+            : null,
+        teamNameB: matchSetup.teamNameBController.text.trim().isNotEmpty
+            ? matchSetup.teamNameBController.text.trim()
+            : null,
         youtubeLink: youtubeLink,
         rtmpUrl: rtmpUrl,
         streamKey: streamKey,
@@ -124,15 +116,14 @@ class MatchDetailsScreen extends StatelessWidget {
         backgroundColor: AppColors.green,
         title: showDelete ? 'Match Details' : 'Match Created',
         showBackButton: showDelete,
-        rightActions:
-            showDelete
-                ? [
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => showDeleteMatchDialog(context, match!.id!),
-                  ),
-                ]
-                : null,
+        rightActions: showDelete
+            ? [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => showDeleteMatchDialog(context, match!.id!),
+          ),
+        ]
+            : null,
       ),
       body: SafeArea(
         child: Padding(
@@ -140,18 +131,9 @@ class MatchDetailsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MatchSummaryCard(
-                sport: sport,
-                matchType: matchType,
-                format: format,
-                playerNames: playerNames,
-              ),
+              MatchSummaryCard(sport: sport, matchType: matchType, format: format, playerNames: playerNames),
               const SizedBox(height: 20),
-              StreamIngestCard(
-                youtubeLink: youtubeLink,
-                rtmpUrl: rtmpUrl,
-                streamKey: streamKey,
-              ),
+              StreamIngestCard(youtubeLink: youtubeLink, rtmpUrl: rtmpUrl, streamKey: streamKey),
               const Spacer(),
               AppButton(
                 text: 'Go Live',
@@ -159,7 +141,20 @@ class MatchDetailsScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const GoLiveCameraScreen(),
+                      builder: (context) => GoLiveCameraScreen(
+                        matchId: matchId,
+                        sport: sport,
+                        side1Players: matchType == 'Doubles'
+                            ? playerNames.take(2).toList()
+                            : [playerNames.isNotEmpty ? playerNames[0] : ''],
+                        side2Players: matchType == 'Doubles'
+                            ? playerNames.skip(2).take(2).toList()
+                            : [playerNames.length > 1 ? playerNames[1] : ''],
+                        teamNameA: teamNameA,
+                        teamNameB: teamNameB,
+                        rtmpUrl: rtmpUrl,
+                        streamKey: streamKey,
+                      ),
                     ),
                   );
                 },
@@ -171,30 +166,15 @@ class MatchDetailsScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (context) => ScoringScreen(
-                            matchId: matchId,
-                            sport: sport,
-                            matchType: matchType,
-                            side1Players:
-                                matchType == 'Doubles'
-                                    ? playerNames.take(2).toList()
-                                    : [
-                                      playerNames.isNotEmpty
-                                          ? playerNames[0]
-                                          : '',
-                                    ],
-                            side2Players:
-                                matchType == 'Doubles'
-                                    ? playerNames.skip(2).take(2).toList()
-                                    : [
-                                      playerNames.length > 1
-                                          ? playerNames[1]
-                                          : '',
-                                    ],
-                            teamNameA: teamNameA,
-                            teamNameB: teamNameB,
-                          ),
+                      builder: (context) => ScoringScreen(
+                        matchId: matchId,
+                        sport: sport,
+                        matchType: matchType,
+                        side1Players: matchType == 'Doubles' ? playerNames.take(2).toList() : [playerNames.isNotEmpty ? playerNames[0] : ''],
+                        side2Players: matchType == 'Doubles' ? playerNames.skip(2).take(2).toList() : [playerNames.length > 1 ? playerNames[1] : ''],
+                        teamNameA: teamNameA,
+                        teamNameB: teamNameB,
+                      ),
                     ),
                   );
                 },
@@ -204,10 +184,7 @@ class MatchDetailsScreen extends StatelessWidget {
                 text: 'Go to My Matches',
                 backgroundColor: Colors.white,
                 textColor: Colors.black,
-                onPressed:
-                    () => Navigator.of(
-                      context,
-                    ).popUntil((route) => route.isFirst),
+                onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),
             ],
           ),

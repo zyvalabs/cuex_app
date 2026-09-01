@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../controllers/frame_tracking_controller.dart';
 import '../../controllers/match_result_conrollers.dart';
 import '../../controllers/score_controller.dart';
 
 
 /// Saves/loads the combined state of all 3 scoring controllers to local
-/// device storage — keyed by matchId, so state survives app kill/restart.
-/// This is the source of truth for the scorer's own device; Firebase RTDB
-/// sync (for the streaming phone) will be layered on top later.
+/// device storage — keyed by matchId, so state survives app kill/restart
+/// on the SAME device. For a second device (e.g. someone viewing the
+/// match from a different phone/account), local storage won't have
+/// anything — that's what applyJsonToControllers + RTDB remote sync
+/// (via RtdbSyncService) is for instead.
 class ScoreLocalStorageService {
   String _keyFor(String matchId) => 'score_session_$matchId';
 
@@ -20,7 +21,34 @@ class ScoreLocalStorageService {
         required MatchResultController result,
       }) async {
     final prefs = await SharedPreferences.getInstance();
-    final json = {
+    await prefs.setString(_keyFor(matchId), jsonEncode(buildJson(score: score, frames: frames, result: result)));
+  }
+
+  /// Loads a previously saved LOCAL session — only exists on the device
+  /// that actually scored the match. Returns the raw json map (or null)
+  /// so the caller can decide what to do if nothing's found locally
+  /// (e.g. fall back to fetching from RTDB instead).
+  Future<Map<String, dynamic>?> loadRaw(String matchId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keyFor(matchId));
+    if (raw == null) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  Future<void> clear(String matchId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyFor(matchId));
+  }
+
+  /// Builds the shared JSON shape from the 3 controllers — used for both
+  /// local save AND the RTDB sync payload, so both stay in the exact
+  /// same format and applyJsonToControllers can parse either one.
+  static Map<String, dynamic> buildJson({
+    required ScoreController score,
+    required FrameTrackingController frames,
+    required MatchResultController result,
+  }) {
+    return {
       'activePlayer': score.activePlayer.value,
       'breakingPlayer': score.breakingPlayer.value,
       'isMatchStarted': score.isMatchStarted.value,
@@ -48,23 +76,16 @@ class ScoreLocalStorageService {
       'matchWinner': result.matchWinner.value,
       'isMatchEnded': result.isMatchEnded.value,
     };
-    await prefs.setString(_keyFor(matchId), jsonEncode(json));
   }
 
-  /// Loads a previously saved session and applies it directly onto the
-  /// 3 controllers passed in. No-op if nothing was saved yet.
-  Future<void> load(
-      String matchId, {
+  /// Applies a JSON map (from either local storage OR RTDB) onto the 3
+  /// controllers. Shared logic so both data sources parse identically.
+  static void applyJsonToControllers(
+      Map<String, dynamic> json, {
         required ScoreController score,
         required FrameTrackingController frames,
         required MatchResultController result,
-      }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyFor(matchId));
-    if (raw == null) return;
-
-    final json = jsonDecode(raw) as Map<String, dynamic>;
-
+      }) {
     score.activePlayer.value = json['activePlayer'] ?? 1;
     score.breakingPlayer.value = json['breakingPlayer'];
     score.isMatchStarted.value = json['isMatchStarted'] ?? false;
@@ -95,10 +116,5 @@ class ScoreLocalStorageService {
 
     result.matchWinner.value = json['matchWinner'];
     result.isMatchEnded.value = json['isMatchEnded'] ?? false;
-  }
-
-  Future<void> clear(String matchId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyFor(matchId));
   }
 }

@@ -23,6 +23,49 @@ class RtdbSyncService implements ScoreSyncService {
 
   DatabaseReference _refFor(String matchId) => _database.ref('Score_Sync/$matchId');
 
+  /// One-time fetch of the current synced state for a match — used when a
+  /// second device (e.g. a different phone on the same account, or a
+  /// viewer) opens ScoringScreen and has no local storage for this match.
+  Future<Map<String, dynamic>?> fetchOnce(String matchId) async {
+    try {
+      // ignore: avoid_print
+      print('🔵 [RtdbSyncService] Fetching current state for $matchId...');
+      final snapshot = await _refFor(matchId).get();
+      if (!snapshot.exists) {
+        // ignore: avoid_print
+        print('🟡 [RtdbSyncService] No synced data found for $matchId');
+        return null;
+      }
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      // ignore: avoid_print
+      print('🟢 [RtdbSyncService] Fetched: $data');
+      return data;
+    } catch (e) {
+      // ignore: avoid_print
+      print('🔴 [RtdbSyncService] fetchOnce FAILED: $e');
+      return null;
+    }
+  }
+
+  /// Continuously listens for updates on this match — used so a second
+  /// device stays live-synced (e.g. viewing the match progress in real
+  /// time from another phone), not just a one-time snapshot.
+  StreamSubscription<DatabaseEvent> listenForUpdates(
+      String matchId, {
+        required void Function(Map<String, dynamic> data) onUpdate,
+      }) {
+    // ignore: avoid_print
+    print('🟠 [RtdbSyncService] Listening for live updates on $matchId');
+
+    return _refFor(matchId).onValue.listen((event) {
+      if (!event.snapshot.exists) return;
+      final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+      // ignore: avoid_print
+      print('🟡 [RtdbSyncService] Remote update received for $matchId: $data');
+      onUpdate(data);
+    });
+  }
+
   @override
   Future<void> sendUpdate(String matchId, Map<String, dynamic> scoreJson) async {
     _lastMatchId = matchId;

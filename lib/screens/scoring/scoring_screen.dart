@@ -14,6 +14,7 @@ import '../matches/widgets/match_control_button.dart';
 import '../matches/widgets/match_start_action.dart';
 import '../players/player_score_box.dart';
 
+
 /// Thin screen — just layout, stacking sections and delegating actions.
 /// All state lives in ScoreController/FrameTrackingController/
 /// MatchResultController; all save/sync logic lives in
@@ -51,6 +52,17 @@ class _ScoringScreenState extends State<ScoringScreen> {
   @override
   void initState() {
     super.initState();
+    persistence.setScoreboardContext(
+      side1Name: widget.teamNameA?.isNotEmpty == true
+          ? widget.teamNameA!
+          : (widget.side1Players.isNotEmpty ? widget.side1Players.join(' & ') : 'Player 1'),
+      side2Name: widget.teamNameB?.isNotEmpty == true
+          ? widget.teamNameB!
+          : (widget.side2Players.isNotEmpty ? widget.side2Players.join(' & ') : 'Player 2'),
+      eventName: 'CueX Match', // TODO: pass real event name if this match belongs to an event
+      roundName: '',
+      totalFrames: 5, // TODO: pass real bestOfFrames value from match format
+    );
     if (widget.matchId != null) {
       persistence.loadForMatch(widget.matchId!);
     }

@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import '../data/services/youtube/youtube_service.dart';
 
+import '../data/services/youtube/youtube_service.dart';
 import 'match_setup_controller.dart';
 
 /// Holds everything from the YouTube setup step — connection state,
@@ -30,6 +30,8 @@ class YoutubeSetupController extends GetxController {
   final Rxn<DateTime> youtubeScheduledStartTime = Rxn<DateTime>();
 
   final RxnString createdYoutubeBroadcastId = RxnString();
+  final RxnString createdRtmpUrl = RxnString();
+  final RxnString createdStreamKey = RxnString();
 
   /// Auto-fills title/description using data from MatchSetupController.
   void autoFillYoutubeMetadata() {
@@ -108,6 +110,8 @@ class YoutubeSetupController extends GetxController {
       scheduledStartTime: isScheduled.value ? youtubeScheduledStartTime.value : null,
     );
     createdYoutubeBroadcastId.value = result['broadcast_id'];
+    createdRtmpUrl.value = result['rtmp_url'];
+    createdStreamKey.value = result['stream_key'];
     return result;
   }
 }

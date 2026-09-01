@@ -5,23 +5,31 @@ import AVFoundation
 import HaishinKit
 
 /// Burns the scoreboard ribbon (and break screen) into the video frames.
-/// iOS equivalent of Android's ScoreboardManager + AndroidViewFilterRender.
+/// Colors/layout deliberately match Android's test_ribbon.xml exactly —
+/// yellow name bars, white score boxes, blue frame counter, dark break
+/// strip with green active-player indicators — so a stream looks
+/// identical whether it was broadcast from an Android or iOS device.
 final class ScoreboardVideoEffect: VideoEffect {
 
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
 
-    /// Latest match data pushed from Flutter.
     private var matchData: [String: Any] = [:]
-
-    /// Cached rendered ribbon (regenerated only when data changes).
     private var cachedRibbon: CIImage?
     private var cacheKey: String = ""
 
-    /// Break screen state.
     private var breakScreenImage: CIImage?
     private var isBreakActive = false
 
     private let lock = NSLock()
+
+    // MARK: - Colors matching test_ribbon.xml exactly
+    private static let colorYellow = UIColor(red: 1.0, green: 0.922, blue: 0.231, alpha: 1)      // #FFEB3B
+    private static let colorBlue = UIColor(red: 0.098, green: 0.463, blue: 0.824, alpha: 1)        // #1976D2
+    private static let colorGreen = UIColor(red: 0.063, green: 0.725, blue: 0.506, alpha: 1)       // #10B981
+    private static let colorOuterBg = UIColor(white: 0, alpha: 0.5)                                 // #80000000
+    private static let colorBottomBg = UIColor(white: 0, alpha: 0.8)                                 // #CC000000
+    private static let colorWhite70 = UIColor(white: 1, alpha: 0.7)                                  // #B3FFFFFF
+    private static let colorDivider = UIColor(white: 1, alpha: 0.25)                                 // #40FFFFFF
 
     // MARK: - Public API
 
@@ -31,7 +39,7 @@ final class ScoreboardVideoEffect: VideoEffect {
         let key = Self.makeKey(matchData)
         if key != cacheKey {
             cacheKey = key
-            cachedRibbon = nil   // force re-render next frame
+            cachedRibbon = nil
         }
     }
 
@@ -64,7 +72,6 @@ final class ScoreboardVideoEffect: VideoEffect {
 
         let canvas = image.extent
 
-        // Break screen — full-frame overlay on top of camera
         if breakActive, let breakImg {
             let scaled = Self.fit(breakImg, into: canvas)
             return scaled.composited(over: image)
@@ -72,20 +79,15 @@ final class ScoreboardVideoEffect: VideoEffect {
 
         guard !data.isEmpty else { return image }
 
-        // Render ribbon if cache is empty
         if ribbon == nil {
-            let ribbonHeight = canvas.height * 0.0926   // matches SCOREBOARD_SCALE_Y (9.26%)
-            let rendered = Self.renderRibbon(
-                data: data,
-                size: CGSize(width: canvas.width, height: ribbonHeight)
-            )
+            let ribbonHeight = canvas.height * 0.0926 // matches SCOREBOARD_SCALE_Y (9.26%)
+            let rendered = Self.renderRibbon(data: data, size: CGSize(width: canvas.width, height: ribbonHeight))
             lock.lock(); cachedRibbon = rendered; lock.unlock()
             ribbon = rendered
         }
 
         guard let ribbon else { return image }
 
-        // Position at bottom (matches TranslateTo.BOTTOM on Android)
         let positioned = ribbon.transformed(
             by: CGAffineTransform(translationX: canvas.origin.x, y: canvas.origin.y)
         )
@@ -121,7 +123,10 @@ final class ScoreboardVideoEffect: VideoEffect {
         return 0
     }
 
-    /// Draws the bottom scoreboard ribbon.
+    /// Draws the bottom scoreboard ribbon — layout matches test_ribbon.xml:
+    /// [top strip: break | match name | break]
+    /// [main strip: p1 name | p1 score | frame info | p2 score | p2 name]
+    /// [bottom strip: active dot | highest break | divider | highest break | active dot]
     private static func renderRibbon(data: [String: Any], size: CGSize) -> CIImage? {
         let renderer = UIGraphicsImageRenderer(size: size)
 
@@ -139,96 +144,128 @@ final class ScoreboardVideoEffect: VideoEffect {
         let p1Active = data["isPlayer1Active"] as? Bool ?? false
         let p2Active = data["isPlayer2Active"] as? Bool ?? false
 
-        let eventName = data["matchName"] as? String ?? ""
+        let eventName = data["matchName"] as? String ?? "EVENT NAME"
         let roundName = data["roundName"] as? String ?? ""
         let centreText = roundName.isEmpty ? eventName : "\(eventName) · \(roundName)"
 
         let img = renderer.image { ctx in
             let c = ctx.cgContext
-            let h = size.height
             let w = size.width
+            let h = size.height
 
-            // Background
-            c.setFillColor(UIColor(white: 0.06, alpha: 0.92).cgColor)
+            // Ratios match XML: top 14dp / main 20dp / bottom 14dp of 48dp total
+            let topH = h * (14.0 / 48.0)
+            let mainH = h * (20.0 / 48.0)
+            let bottomH = h * (14.0 / 48.0)
+            let mainY = topH
+            let bottomY = topH + mainH
+
+            // Outer semi-transparent black background (matches #80000000)
+            c.setFillColor(colorOuterBg.cgColor)
             c.fill(CGRect(x: 0, y: 0, width: w, height: h))
 
-            // Accent line on top
-            c.setFillColor(UIColor(red: 0.78, green: 0.66, blue: 0.29, alpha: 1).cgColor)
-            c.fill(CGRect(x: 0, y: 0, width: w, height: max(2, h * 0.04)))
+            let smallFont = UIFont.boldSystemFont(ofSize: topH * 0.62)
+            let centreFont = UIFont.boldSystemFont(ofSize: topH * 0.60)
 
-            let nameFont = UIFont.systemFont(ofSize: h * 0.30, weight: .semibold)
-            let scoreFont = UIFont.systemFont(ofSize: h * 0.44, weight: .bold)
-            let smallFont = UIFont.systemFont(ofSize: h * 0.18, weight: .regular)
-            let centreFont = UIFont.systemFont(ofSize: h * 0.22, weight: .medium)
+            // ---------- TOP STRIP ----------
+            let breakAttrs: [NSAttributedString.Key: Any] = [.font: smallFont, .foregroundColor: colorYellow]
+            let centreAttrs: [NSAttributedString.Key: Any] = [.font: centreFont, .foregroundColor: colorWhite70]
 
-            let white: [NSAttributedString.Key: Any] = [
-                .font: nameFont, .foregroundColor: UIColor.white
-            ]
-            let gold: [NSAttributedString.Key: Any] = [
-                .font: scoreFont,
-                .foregroundColor: UIColor(red: 0.78, green: 0.66, blue: 0.29, alpha: 1)
-            ]
-            let grey: [NSAttributedString.Key: Any] = [
-                .font: smallFont, .foregroundColor: UIColor(white: 0.72, alpha: 1)
-            ]
-            let centreAttrs: [NSAttributedString.Key: Any] = [
-                .font: centreFont, .foregroundColor: UIColor(white: 0.85, alpha: 1)
-            ]
-
-            let pad = w * 0.02
-
-            // Active indicator — player 1
-            if p1Active {
-                c.setFillColor(UIColor(red: 0.06, green: 0.78, blue: 0.42, alpha: 1).cgColor)
-                c.fillEllipse(in: CGRect(x: pad * 0.4, y: h * 0.40, width: h * 0.16, height: h * 0.16))
-            }
-
-            // Player 1 block
-            p1Name.draw(at: CGPoint(x: pad, y: h * 0.14), withAttributes: white)
-            "Break: \(p1Break)   Highest: \(p1High)"
-                .draw(at: CGPoint(x: pad, y: h * 0.60), withAttributes: grey)
-
-            // Player 1 score
-            let s1 = "\(p1Score)" as NSString
-            let s1Size = s1.size(withAttributes: gold)
-            s1.draw(at: CGPoint(x: w * 0.36 - s1Size.width, y: h * 0.26), withAttributes: gold)
-
-            // Centre — frames + event
-            let frames = "\(p1Frames) (\(total)) \(p2Frames)" as NSString
-            let fFont = UIFont.systemFont(ofSize: h * 0.30, weight: .bold)
-            let fAttrs: [NSAttributedString.Key: Any] = [
-                .font: fFont, .foregroundColor: UIColor.white
-            ]
-            let fSize = frames.size(withAttributes: fAttrs)
-            frames.draw(at: CGPoint(x: (w - fSize.width) / 2, y: h * 0.16), withAttributes: fAttrs)
+            "Break: \(p1Break)".draw(at: CGPoint(x: w * 0.012, y: (topH - smallFont.lineHeight) / 2), withAttributes: breakAttrs)
 
             let centre = centreText as NSString
             let cSize = centre.size(withAttributes: centreAttrs)
-            centre.draw(at: CGPoint(x: (w - cSize.width) / 2, y: h * 0.60), withAttributes: centreAttrs)
+            centre.draw(at: CGPoint(x: (w - cSize.width) / 2, y: (topH - cSize.height) / 2), withAttributes: centreAttrs)
 
-            // Player 2 score
+            let b2 = "Break: \(p2Break)" as NSString
+            let b2Size = b2.size(withAttributes: breakAttrs)
+            b2.draw(at: CGPoint(x: w - w * 0.012 - b2Size.width, y: (topH - smallFont.lineHeight) / 2), withAttributes: breakAttrs)
+
+            // ---------- MAIN STRIP ----------
+            let scoreW = w * 0.07   // ~52dp equivalent
+            let frameW = w * 0.11   // ~80dp equivalent
+            let nameW = (w - 2 * scoreW - frameW) / 2
+
+            let nameFont = UIFont.boldSystemFont(ofSize: mainH * 0.42)
+            let scoreFont = UIFont.boldSystemFont(ofSize: mainH * 0.50)
+            let frameFont = UIFont.boldSystemFont(ofSize: mainH * 0.50)
+
+            // Player 1 name — yellow bg, black text, left-aligned
+            c.setFillColor(colorYellow.cgColor)
+            c.fill(CGRect(x: 0, y: mainY, width: nameW, height: mainH))
+            let n1Attrs: [NSAttributedString.Key: Any] = [.font: nameFont, .foregroundColor: UIColor.black]
+            (p1Name as NSString).draw(
+                at: CGPoint(x: w * 0.012, y: mainY + (mainH - nameFont.lineHeight) / 2),
+                withAttributes: n1Attrs
+            )
+
+            // Player 1 score — white bg, black text, centered
+            c.setFillColor(UIColor.white.cgColor)
+            c.fill(CGRect(x: nameW, y: mainY, width: scoreW, height: mainH))
+            let s1 = "\(p1Score)" as NSString
+            let s1Attrs: [NSAttributedString.Key: Any] = [.font: scoreFont, .foregroundColor: UIColor.black]
+            let s1Size = s1.size(withAttributes: s1Attrs)
+            s1.draw(at: CGPoint(x: nameW + (scoreW - s1Size.width) / 2, y: mainY + (mainH - s1Size.height) / 2), withAttributes: s1Attrs)
+
+            // Frame info — blue bg, white text, centered
+            c.setFillColor(colorBlue.cgColor)
+            c.fill(CGRect(x: nameW + scoreW, y: mainY, width: frameW, height: mainH))
+            let frames = "\(p1Frames) (\(total)) \(p2Frames)" as NSString
+            let frameAttrs: [NSAttributedString.Key: Any] = [.font: frameFont, .foregroundColor: UIColor.white]
+            let frameSize = frames.size(withAttributes: frameAttrs)
+            frames.draw(
+                at: CGPoint(x: nameW + scoreW + (frameW - frameSize.width) / 2, y: mainY + (mainH - frameSize.height) / 2),
+                withAttributes: frameAttrs
+            )
+
+            // Player 2 score — white bg, black text, centered
+            let p2ScoreX = nameW + scoreW + frameW
+            c.setFillColor(UIColor.white.cgColor)
+            c.fill(CGRect(x: p2ScoreX, y: mainY, width: scoreW, height: mainH))
             let s2 = "\(p2Score)" as NSString
-            s2.draw(at: CGPoint(x: w * 0.64, y: h * 0.26), withAttributes: gold)
+            let s2Size = s2.size(withAttributes: s1Attrs)
+            s2.draw(at: CGPoint(x: p2ScoreX + (scoreW - s2Size.width) / 2, y: mainY + (mainH - s2Size.height) / 2), withAttributes: s1Attrs)
 
-            // Player 2 block (right aligned)
+            // Player 2 name — yellow bg, black text, right-aligned
+            let p2NameX = p2ScoreX + scoreW
+            c.setFillColor(colorYellow.cgColor)
+            c.fill(CGRect(x: p2NameX, y: mainY, width: nameW, height: mainH))
             let n2 = p2Name as NSString
-            let n2Size = n2.size(withAttributes: white)
-            n2.draw(at: CGPoint(x: w - pad - n2Size.width, y: h * 0.14), withAttributes: white)
+            let n2Size = n2.size(withAttributes: n1Attrs)
+            n2.draw(at: CGPoint(x: w - w * 0.012 - n2Size.width, y: mainY + (mainH - n2Size.height) / 2), withAttributes: n1Attrs)
 
-            let b2 = "Break: \(p2Break)   Highest: \(p2High)" as NSString
-            let b2Size = b2.size(withAttributes: grey)
-            b2.draw(at: CGPoint(x: w - pad - b2Size.width, y: h * 0.60), withAttributes: grey)
+            // ---------- BOTTOM STRIP ----------
+            c.setFillColor(colorBottomBg.cgColor)
+            c.fill(CGRect(x: 0, y: bottomY, width: w, height: bottomH))
 
-            // Active indicator — player 2
-            if p2Active {
-                c.setFillColor(UIColor(red: 0.06, green: 0.78, blue: 0.42, alpha: 1).cgColor)
-                c.fillEllipse(in: CGRect(x: w - pad * 0.4 - h * 0.16, y: h * 0.40,
-                                         width: h * 0.16, height: h * 0.16))
+            let indicatorW = w * 0.006 // ~3dp equivalent
+            if p1Active {
+                c.setFillColor(colorGreen.cgColor)
+                c.fill(CGRect(x: 0, y: bottomY, width: indicatorW, height: bottomH))
             }
+            if p2Active {
+                c.setFillColor(colorGreen.cgColor)
+                c.fill(CGRect(x: w - indicatorW, y: bottomY, width: indicatorW, height: bottomH))
+            }
+
+            let highFont = UIFont.systemFont(ofSize: bottomH * 0.55)
+            let highAttrs: [NSAttributedString.Key: Any] = [.font: highFont, .foregroundColor: colorWhite70]
+
+            "Highest Break: \(p1High)".draw(
+                at: CGPoint(x: w * 0.012, y: bottomY + (bottomH - highFont.lineHeight) / 2),
+                withAttributes: highAttrs
+            )
+
+            // Divider line at center
+            c.setFillColor(colorDivider.cgColor)
+            c.fill(CGRect(x: w / 2 - 0.5, y: bottomY, width: 1, height: bottomH))
+
+            let h2 = "Highest Break: \(p2High)" as NSString
+            let h2Size = h2.size(withAttributes: highAttrs)
+            h2.draw(at: CGPoint(x: w - w * 0.012 - h2Size.width, y: bottomY + (bottomH - highFont.lineHeight) / 2), withAttributes: highAttrs)
         }
 
         guard let cg = img.cgImage else { return nil }
-        // Flip vertically — CoreImage origin is bottom-left
         return CIImage(cgImage: cg)
     }
 
@@ -243,12 +280,11 @@ final class ScoreboardVideoEffect: VideoEffect {
             let title = "INTERVAL" as NSString
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: size.height * 0.10, weight: .bold),
-                .foregroundColor: UIColor(red: 0.78, green: 0.66, blue: 0.29, alpha: 1)
+                .foregroundColor: colorYellow
             ]
             let tSize = title.size(withAttributes: attrs)
             title.draw(
-                at: CGPoint(x: (size.width - tSize.width) / 2,
-                            y: (size.height - tSize.height) / 2),
+                at: CGPoint(x: (size.width - tSize.width) / 2, y: (size.height - tSize.height) / 2),
                 withAttributes: attrs
             )
 
@@ -259,8 +295,7 @@ final class ScoreboardVideoEffect: VideoEffect {
             ]
             let sSize = sub.size(withAttributes: sAttrs)
             sub.draw(
-                at: CGPoint(x: (size.width - sSize.width) / 2,
-                            y: (size.height + tSize.height) / 2 + size.height * 0.02),
+                at: CGPoint(x: (size.width - sSize.width) / 2, y: (size.height + tSize.height) / 2 + size.height * 0.02),
                 withAttributes: sAttrs
             )
         }

@@ -2,7 +2,9 @@ import 'package:cuex_app/screens/settings/stream_settings.dart';
 import 'package:cuex_app/screens/settings/widgets/settings_menu_item.dart';
 import 'package:flutter/material.dart';
 import '../../core/utils/constants/app_colors.dart';
+import '../../features/personalization/controllers/user_controller.dart';
 import '../../features/shop/screens/events/events_screen.dart';
+import '../../utils/constants/sizes.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,7 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = UserController.instance;
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: CustomAppBar(
@@ -84,12 +87,15 @@ class SettingScreen extends StatelessWidget {
               const SizedBox(height: 20),
               const Divider(),
               const SizedBox(height: 10),
-
+              // SizedBox(
+              //     width: double.infinity,
+              //     child: OutlinedButton(onPressed: () => controller.logout(), child: const Text('Logout'))),
+              // const SizedBox(height: TSizes.spaceBtwSections * 5.5),
               SettingsMenuItem(
                 icon: Icons.logout,
                 label: 'Logout',
                 showChevron: false,
-                onTap: () => print('🟠 Logout tapped'),
+                onTap: () =>  controller.logout(),
               ),
               SettingsMenuItem(
                 icon: Icons.delete_outline,
